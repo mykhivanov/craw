@@ -1,5 +1,8 @@
-## ADDED Requirements
+# session-quiz Specification
 
+## Purpose
+TBD - created by archiving change add-session-quiz-verification. Update Purpose after archive.
+## Requirements
 ### Requirement: Quiz shape
 
 Each quiz SHALL contain exactly 4 multiple-choice questions and exactly 1 open-ended reflection prompt. Each multiple-choice question SHALL have exactly 4 distinct options labeled A, B, C, D and a single correct option. The reflection prompt SHALL accept free text and is never graded.
@@ -109,3 +112,4 @@ The "3 of 4" pass threshold SHALL be defined exactly once in the codebase as a n
 - **WHEN** the threshold value is referenced in code
 - **THEN** all references resolve to one named constant
 - **AND** changing the constant in one place changes the threshold everywhere
+

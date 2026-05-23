@@ -1,5 +1,8 @@
-## ADDED Requirements
+# app-shell Specification
 
+## Purpose
+TBD - created by archiving change add-home-dashboard. Update Purpose after archive.
+## Requirements
 ### Requirement: Root tab-based navigation
 
 The app SHALL present a root `TabView` with exactly four tabs in this order: Home, Quotes, Stats, Profile. The Home tab SHALL be selected on first launch and on every cold start until tab-state restoration is introduced.
@@ -53,3 +56,4 @@ The Quotes, Stats, and Profile tabs SHALL each render a placeholder view contain
 
 - **WHEN** the user selects the Profile tab
 - **THEN** a placeholder screen is shown identifying the Profile feature as not yet implemented
+

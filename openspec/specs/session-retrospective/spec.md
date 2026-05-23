@@ -1,5 +1,8 @@
-## ADDED Requirements
+# session-retrospective Specification
 
+## Purpose
+TBD - created by archiving change add-session-quiz-verification. Update Purpose after archive.
+## Requirements
 ### Requirement: Post-stop flow sequence
 
 After a session transitions to `saving`, the system SHALL present the user with a sequential post-stop flow in this order: (1) thoughts prompt, (2) quiz, (3) retrospective ratings, (4) optional streak celebration. Each step SHALL be dismissible to the next without blocking persistence of the underlying session record.
@@ -102,3 +105,4 @@ The retrospective ratings, thoughts capture, and streak credit SHALL NOT depend 
 - **THEN** the session's minutes and pages are committed to today's `ReadingDay`
 - **AND** the streak is updated as if the session were verified
 - **AND** the session does not display the verified badge
+

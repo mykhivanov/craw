@@ -1,5 +1,8 @@
-## ADDED Requirements
+# book-library Specification
 
+## Purpose
+TBD - created by archiving change add-home-dashboard. Update Purpose after archive.
+## Requirements
 ### Requirement: Book domain model
 
 The system SHALL persist a `Book` entity with the following fields: stable identifier, title, author, optional cover-image reference, total page count, current page count, date added. The model SHALL be persisted using the app's chosen on-device storage layer (SwiftData, per design).
@@ -57,3 +60,4 @@ This capability SHALL NOT define book creation, editing, or deletion. Those oper
 - **WHEN** the user interacts with any Home-tab surface in this change
 - **THEN** no production code path creates, edits, or deletes a book
 - **AND** the add-book affordance is wired to a "coming soon" no-op placeholder
+

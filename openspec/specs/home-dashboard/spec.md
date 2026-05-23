@@ -1,5 +1,8 @@
-## ADDED Requirements
+# home-dashboard Specification
 
+## Purpose
+TBD - created by archiving change add-home-dashboard. Update Purpose after archive.
+## Requirements
 ### Requirement: Vertically scrolling single-feed layout
 
 The Home tab SHALL present its content as a single vertically scrolling feed. The feed sections SHALL appear in this order from top to bottom: greeting, live counter, 7-day calendar strip, stat cards row, Reading Now, Finished.
@@ -177,3 +180,4 @@ Tapping a row in either Reading Now or Finished SHALL push a book-detail destina
 
 - **WHEN** the user taps a book row in Reading Now
 - **THEN** a detail view for that book is pushed onto the Home navigation stack
+

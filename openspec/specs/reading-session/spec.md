@@ -1,5 +1,8 @@
-## ADDED Requirements
+# reading-session Specification
 
+## Purpose
+TBD - created by archiving change add-session-quiz-verification. Update Purpose after archive.
+## Requirements
 ### Requirement: Session lifecycle states
 
 The system SHALL model a reading session as a state machine with the states `idle`, `running`, `paused`, `stopped`, and `saving`. Transitions SHALL be: `idle → running` (start), `running ⇄ paused` (pause / resume), `running → stopped` (stop from running), `paused → stopped` (stop from paused), `stopped → saving` (post-stop pipeline), `saving → idle` (pipeline complete). No other transitions SHALL be permitted.
@@ -90,3 +93,4 @@ While a session is `running` or `paused`, the user SHALL have an affordance on t
 
 - **WHEN** the user taps the add-thought affordance during a session, enters text, and confirms
 - **THEN** a `Thought` row is persisted with the entered text and the book identifier
+

@@ -1,5 +1,8 @@
-## ADDED Requirements
+# book-detail Specification
 
+## Purpose
+TBD - created by archiving change add-session-quiz-verification. Update Purpose after archive.
+## Requirements
 ### Requirement: Book detail replaces the placeholder
 
 The book-detail destination SHALL replace the `BookDetailPlaceholder` introduced by `add-home-dashboard`. Tapping a row in Reading Now or Finished SHALL push this real detail screen onto the Home tab's navigation stack.
@@ -49,3 +52,4 @@ The quotes and thoughts lists on the book detail SHALL be read-only — no add, 
 
 - **WHEN** the user views the quotes or thoughts list on the book detail
 - **THEN** no controls are present to add, edit, or delete items from the list
+

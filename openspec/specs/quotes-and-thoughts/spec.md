@@ -1,5 +1,8 @@
-## ADDED Requirements
+# quotes-and-thoughts Specification
 
+## Purpose
+TBD - created by archiving change add-session-quiz-verification. Update Purpose after archive.
+## Requirements
 ### Requirement: Quote domain model
 
 The system SHALL persist a `Quote` entity with the following fields: stable identifier, book identifier (foreign reference), text, optional page number, captured-at timestamp. Quotes SHALL be persisted in the app's on-device SwiftData store.
@@ -54,3 +57,4 @@ This capability SHALL NOT define a cross-book quotes browser, cross-book quote s
 
 - **WHEN** the user navigates anywhere in this change
 - **THEN** no screen presents quotes or thoughts from more than one book at a time
+
