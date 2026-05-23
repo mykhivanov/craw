@@ -1,0 +1,48 @@
+# SwiftLint config — keep it light. Personal project.
+# Docs: https://realm.github.io/SwiftLint/rule-directory.html
+
+included:
+  - Craw
+
+excluded:
+  - .build
+  - build
+  - DerivedData
+  - Pods
+  - "**/Generated"
+
+# Turn off rules that fight SwiftUI idioms or are pure stylistic noise.
+disabled_rules:
+  - trailing_whitespace      # SwiftFormat handles this
+  - todo                     # personal project — TODOs are fine
+  - line_length              # SwiftFormat enforces a softer width
+  - identifier_name          # too noisy for SwiftUI view bodies
+  - type_name                # same
+  - multiple_closures_with_trailing_closure  # SwiftUI uses these everywhere
+  - opening_brace            # SwiftFormat handles brace style
+
+# A few opt-in rules that catch real issues without being annoying.
+opt_in_rules:
+  - empty_count
+  - empty_string
+  - first_where
+  - last_where
+  - contains_over_filter_count
+  - contains_over_first_not_nil
+  - redundant_nil_coalescing
+  - sorted_first_last
+  - toggle_bool
+
+# Soft limits — warn only, never error on a personal project.
+file_length:
+  warning: 500
+  error: 1500
+function_body_length:
+  warning: 80
+  error: 200
+type_body_length:
+  warning: 400
+  error: 1000
+cyclomatic_complexity:
+  warning: 15
+  error: 30

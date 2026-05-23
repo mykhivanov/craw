@@ -1,0 +1,28 @@
+# SwiftFormat config — minimal, opinionated only where it keeps things tidy.
+# Docs: https://github.com/nicklockwood/SwiftFormat/blob/main/Rules.md
+
+--swiftversion 5.10
+
+# Scope
+--exclude .build,build,DerivedData,Pods,**/Generated
+
+# Layout
+--indent 4
+--maxwidth 120
+--wraparguments before-first
+--wrapparameters before-first
+--wrapcollections before-first
+--closingparen balanced
+--commas inline
+
+# Imports
+--importgrouping testable-bottom
+
+# Whitespace
+--trimwhitespace always
+--linebreaks lf
+--ranges no-space
+
+# SwiftUI-friendly
+--self remove
+--selfrequired
