@@ -1,17 +1,23 @@
-//
-//  CrawApp.swift
-//  Craw
-//
-//  Created by Misha Ivanov on 23/05/2026.
-//
-
+import SwiftData
 import SwiftUI
 
 @main
 struct CrawApp: App {
+    let container: ModelContainer
+
+    init() {
+        container = CrawModelContainer.live()
+        #if DEBUG
+            if SampleData.isLaunchArgumentEnabled {
+                SampleData.seedIfEmpty(into: ModelContext(container))
+            }
+        #endif
+    }
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
         }
+        .modelContainer(container)
     }
 }

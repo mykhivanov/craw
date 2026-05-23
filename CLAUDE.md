@@ -15,10 +15,22 @@ This is an Xcode-managed project (`Craw.xcodeproj`) — there is no SwiftPM `Pac
 xcodebuild -project Craw.xcodeproj -list
 
 # Build for simulator
-xcodebuild -project Craw.xcodeproj -scheme Craw -destination 'platform=iOS Simulator,name=iPhone 16' build
+xcodebuild -project Craw.xcodeproj -scheme Craw -destination 'platform=iOS Simulator,name=iPhone 17' build
 
 # Or just: open Craw.xcodeproj && ⌘R
 ```
+
+## Sample data (debug builds)
+
+In DEBUG configurations, the app can self-seed two in-progress books, one finished book, and seven days of reading activity producing a visible 4-day streak and positive day-over-day pages delta. Enable by passing the launch argument:
+
+```
+-CrawSeedSampleData YES
+```
+
+This sets `UserDefaults.standard.bool(forKey: "CrawSeedSampleData")` to `true`. `SampleData.seedIfEmpty(into:)` is idempotent — it skips seeding if any `Book` or `ReadingDay` rows already exist. Seeding code is wrapped in `#if DEBUG` and excluded from release builds.
+
+To exercise the empty-state UI, launch without the argument (or delete the simulator app first to clear persisted data).
 
 ## Adding files — do NOT edit `project.pbxproj`
 
