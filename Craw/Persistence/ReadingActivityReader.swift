@@ -107,6 +107,37 @@ enum ReadingActivityReader {
         return streak
     }
 
+    /// Count of distinct local-calendar days within the most recent 7 days inclusive of today
+    /// where at least one session ending on that day has `startDifficulty >= 4`
+    /// OR `focusDifficulty >= 4`. Joins `[ReadingSession]` to `[SessionRetrospective]` by `sessionID`.
+    static func hardDaysInLastSevenDays(
+        sessions: [ReadingSession],
+        retrospectives: [SessionRetrospective],
+        now: Date = .now,
+        calendar: Calendar = .autoupdatingCurrent
+    ) -> Int {
+        let today = calendar.startOfDay(for: now)
+        let retroBySession = Dictionary(
+            grouping: retrospectives,
+            by: \.sessionID
+        ).compactMapValues(\.first)
+
+        var hardDays: Set<Date> = []
+        for session in sessions {
+            let dayStart = calendar.startOfDay(for: session.endedAt)
+            guard let daysAgo = calendar.dateComponents([.day], from: dayStart, to: today).day,
+                  (0..<7).contains(daysAgo)
+            else {
+                continue
+            }
+            guard let retro = retroBySession[session.id] else { continue }
+            if retro.startDifficulty >= 4 || retro.focusDifficulty >= 4 {
+                hardDays.insert(dayStart)
+            }
+        }
+        return hardDays.count
+    }
+
     static func currentCalendarWeek(
         from days: [ReadingDay],
         now: Date = .now,

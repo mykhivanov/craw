@@ -4,7 +4,7 @@ struct WeekStripSection: View {
     let days: [ReadingDay]
     let dailyGoalMinutes: Int
 
-    init(days: [ReadingDay], dailyGoalMinutes: Int = 30) {
+    init(days: [ReadingDay], dailyGoalMinutes: Int = ReadingGoals.dailyMinutes) {
         self.days = days
         self.dailyGoalMinutes = dailyGoalMinutes
     }

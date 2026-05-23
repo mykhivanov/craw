@@ -25,7 +25,7 @@ struct HomeDashboardView: View {
         }
         .background(Theme.Palette.canvas)
         .navigationDestination(for: Book.self) { book in
-            BookDetailPlaceholder(book: book)
+            BookDetailView(book: book)
         }
         .toolbar(.hidden, for: .navigationBar)
     }

@@ -5,6 +5,8 @@ import SwiftUI
 struct CrawApp: App {
     let container: ModelContainer
 
+    @State private var sessionEngine = SessionEngine()
+
     init() {
         container = CrawModelContainer.live()
         #if DEBUG
@@ -17,6 +19,7 @@ struct CrawApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
+                .environment(sessionEngine)
         }
         .modelContainer(container)
     }

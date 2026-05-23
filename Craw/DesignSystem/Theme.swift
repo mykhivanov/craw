@@ -37,6 +37,11 @@ enum Theme {
         static let section: CGFloat = 64
     }
 
+    enum Quiz {
+        static let questionCount: Int = 4
+        static let passThreshold: Int = 3
+    }
+
     enum Elevation {
         static let cardColor = Color.black.opacity(0.10)
         static let cardRadius: CGFloat = 8

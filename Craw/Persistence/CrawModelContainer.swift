@@ -2,7 +2,14 @@ import Foundation
 import SwiftData
 
 enum CrawModelContainer {
-    static let schema = Schema([Book.self, ReadingDay.self])
+    static let schema = Schema([
+        Book.self,
+        ReadingDay.self,
+        ReadingSession.self,
+        SessionRetrospective.self,
+        Quote.self,
+        Thought.self
+    ])
 
     static func make(inMemory: Bool = false) -> ModelContainer {
         let configuration = ModelConfiguration(
