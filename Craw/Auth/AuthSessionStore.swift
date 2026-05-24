@@ -4,7 +4,7 @@ import Observation
 @Observable
 @MainActor
 final class AuthSessionStore {
-    enum BootstrapStatus {
+    enum BootstrapStatus: Equatable {
         case idle
         case inFlight
         case ready(APIUser)

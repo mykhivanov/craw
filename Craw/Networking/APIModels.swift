@@ -58,3 +58,39 @@ struct APILibraryBook: Decodable, Equatable {
         case lastReadAt = "last_read_at"
     }
 }
+
+struct APIDevice: Decodable, Equatable {
+    let id: String
+    let userID: String
+    let token: String
+    let platform: String
+    let appVersion: String
+    let locale: String
+    let createdAt: Date
+    let updatedAt: Date
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case userID = "user_id"
+        case token
+        case platform
+        case appVersion = "app_version"
+        case locale
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+    }
+}
+
+struct APIDeviceRegistration: Encodable {
+    let token: String
+    let platform: String
+    let appVersion: String
+    let locale: String
+
+    enum CodingKeys: String, CodingKey {
+        case token
+        case platform
+        case appVersion = "app_version"
+        case locale
+    }
+}

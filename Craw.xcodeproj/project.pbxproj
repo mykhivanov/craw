@@ -12,6 +12,8 @@
 		CA3A58EA2FC2BDE100FF0957 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CA3A58E92FC2BDE100FF0957 /* WidgetKit.framework */; };
 		CA3A58EC2FC2BDE100FF0957 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CA3A58EB2FC2BDE100FF0957 /* SwiftUI.framework */; };
 		CA3A58F92FC2BDE200FF0957 /* CrawWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CA3A58E72FC2BDE100FF0957 /* CrawWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		CA97BA012FC3409800311719 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = CA97BA002FC3409800311719 /* FirebaseCore */; };
+		CA97BA032FC3409800311719 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = CA97BA022FC3409800311719 /* FirebaseMessaging */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -98,7 +100,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CA97BA032FC3409800311719 /* FirebaseMessaging in Frameworks */,
 				CA1C581D2FC2813C00C624D4 /* ClerkKit in Frameworks */,
+				CA97BA012FC3409800311719 /* FirebaseCore in Frameworks */,
 				CA1C581F2FC2813C00C624D4 /* ClerkKitUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -168,6 +172,8 @@
 			packageProductDependencies = (
 				CA1C581C2FC2813C00C624D4 /* ClerkKit */,
 				CA1C581E2FC2813C00C624D4 /* ClerkKitUI */,
+				CA97BA002FC3409800311719 /* FirebaseCore */,
+				CA97BA022FC3409800311719 /* FirebaseMessaging */,
 			);
 			productName = Craw;
 			productReference = CA1C57972FC24A6800C624D4 /* Craw.app */;
@@ -225,6 +231,7 @@
 			packageReferences = (
 				CA1C581B2FC2813C00C624D4 /* XCRemoteSwiftPackageReference "clerk-ios" */,
 				CA97B9F72FC33B5500311719 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
+				CA97B9FF2FC3409800311719 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CA1C57982FC24A6800C624D4 /* Products */;
@@ -606,6 +613,14 @@
 				minimumVersion = 5.74.0;
 			};
 		};
+		CA97B9FF2FC3409800311719 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.13.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -618,6 +633,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = CA1C581B2FC2813C00C624D4 /* XCRemoteSwiftPackageReference "clerk-ios" */;
 			productName = ClerkKitUI;
+		};
+		CA97BA002FC3409800311719 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CA97B9FF2FC3409800311719 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		CA97BA022FC3409800311719 /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CA97B9FF2FC3409800311719 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import UserNotifications
 
 enum OnboardingGoal: String, CaseIterable, Identifiable {
     case nextLevelPartner
@@ -136,6 +137,8 @@ final class OnboardingState {
     var readingWeekdays: Set<Weekday> = Weekday.weekdays
     var reminderTime: DateComponents = .init(hour: 8, minute: 0)
     var yearlyGoal: YearlyGoal?
+    var wantsReminders: Bool = false
+    var reminderAuthorizationStatus: UNAuthorizationStatus = .notDetermined
     private(set) var isCompleted: Bool = false
 
     static var shouldSkipFromLaunchArgs: Bool {

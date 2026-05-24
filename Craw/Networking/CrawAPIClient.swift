@@ -33,6 +33,26 @@ actor CrawAPIClient {
         )
     }
 
+    func registerDevice(
+        token: String,
+        platform: String,
+        appVersion: String,
+        locale: String
+    ) async throws -> APIDevice {
+        let body = APIDeviceRegistration(
+            token: token,
+            platform: platform,
+            appVersion: appVersion,
+            locale: locale
+        )
+        let bodyData = try encoder.encode(body)
+        return try await performWithBody(
+            path: "/devices",
+            method: "POST",
+            bodyData: bodyData
+        )
+    }
+
     private func performGet<Response: Decodable>(
         path: String,
         method: String,
@@ -52,6 +72,30 @@ actor CrawAPIClient {
                 method: method,
                 query: query,
                 bodyData: nil,
+                forceRefreshToken: true
+            )
+        }
+    }
+
+    private func performWithBody<Response: Decodable>(
+        path: String,
+        method: String,
+        bodyData: Data
+    ) async throws -> Response {
+        do {
+            return try await sendOnce(
+                path: path,
+                method: method,
+                query: [],
+                bodyData: bodyData,
+                forceRefreshToken: false
+            )
+        } catch APIError.unauthorized {
+            return try await sendOnce(
+                path: path,
+                method: method,
+                query: [],
+                bodyData: bodyData,
                 forceRefreshToken: true
             )
         }

@@ -43,4 +43,5 @@ struct OnboardingView: View {
 #Preview {
     OnboardingView()
         .environment(OnboardingState())
+        .environment(NotificationsService.shared)
 }

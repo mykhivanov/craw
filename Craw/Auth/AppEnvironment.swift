@@ -35,6 +35,11 @@ enum AppEnvironment {
     }
 
     @MainActor
+    static func makeDeviceRegistrationCoordinator() -> DeviceRegistrationCoordinator {
+        DeviceRegistrationCoordinator(apiClient: liveAPIClient)
+    }
+
+    @MainActor
     static func makeBookSearchStore() -> BookSearchStore {
         let service: BookSearchService
         #if DEBUG

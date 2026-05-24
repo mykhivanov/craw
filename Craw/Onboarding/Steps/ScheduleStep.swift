@@ -1,11 +1,16 @@
 import SwiftUI
+import UIKit
+import UserNotifications
 
 struct ScheduleStep: View {
     @Bindable var state: OnboardingState
     let onContinue: () -> Void
 
+    @Environment(NotificationsService.self) private var notifications
+
     @State private var isPickerPresented: Bool = false
     @State private var pickerDate: Date = ScheduleStep.defaultDate()
+    @State private var showDeniedNote: Bool = false
 
     private static let orderedDays: [Weekday] = [
         .monday, .tuesday, .wednesday, .thursday, .friday, .saturday, .sunday
@@ -30,14 +35,123 @@ struct ScheduleStep: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                 daysCard
                 reminderCard
+                reminderToggleCard
             }
         }
         .onAppear {
             pickerDate = ScheduleStep.dateFromComponents(state.reminderTime)
         }
+        .task {
+            await notifications.refreshAuthorizationStatus()
+            state.reminderAuthorizationStatus = notifications.authorizationStatus
+            showDeniedNote = state.wantsReminders && notifications.authorizationStatus == .denied
+        }
+        .onChange(of: state.readingWeekdays) {
+            rescheduleIfActive()
+        }
+        .onChange(of: state.reminderTime) {
+            rescheduleIfActive()
+        }
         .sheet(isPresented: $isPickerPresented) {
             pickerSheet
-                .presentationDetents([.height(320)])
+                .presentationDetents([.height(360), .medium])
+        }
+    }
+
+    private var reminderToggleBinding: Binding<Bool> {
+        Binding(
+            get: { state.wantsReminders },
+            set: { newValue in
+                Task { @MainActor in await handleReminderToggle(newValue: newValue) }
+            }
+        )
+    }
+
+    private var reminderToggleCard: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            HStack(alignment: .top, spacing: Theme.Spacing.base) {
+                Image(systemName: "bell.badge.fill")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(Theme.Palette.rausch)
+                    .frame(width: 44, height: 44)
+                    .background(Theme.Palette.rauschTint)
+                    .clipShape(Circle())
+
+                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                    Text("Turn on reminders")
+                        .font(Theme.Typography.titleMd)
+                        .foregroundStyle(Theme.Palette.ink)
+                    Text("We'll send a gentle nudge at this time so a missed day doesn't become a missed week.")
+                        .font(Theme.Typography.bodySm)
+                        .foregroundStyle(Theme.Palette.muted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: Theme.Spacing.sm)
+
+                Toggle("", isOn: reminderToggleBinding)
+                    .labelsHidden()
+                    .tint(Theme.Palette.rausch)
+            }
+
+            if showDeniedNote {
+                HStack(spacing: Theme.Spacing.sm) {
+                    Text("Notifications are off. Enable them in Settings.")
+                        .font(Theme.Typography.bodySm)
+                        .foregroundStyle(Theme.Palette.muted)
+                    Spacer(minLength: Theme.Spacing.sm)
+                    Button("Open Settings") {
+                        if let url = URL(string: UIApplication.openSettingsURLString) {
+                            UIApplication.shared.open(url)
+                        }
+                    }
+                    .font(Theme.Typography.buttonSm)
+                    .foregroundStyle(Theme.Palette.rausch)
+                }
+                .padding(.top, Theme.Spacing.xs)
+            }
+        }
+        .padding(Theme.Spacing.base)
+        .background(Theme.Palette.surfaceCard)
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.card)
+                .stroke(Theme.Palette.hairlineSoft, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card))
+        .accessibilityElement(children: .contain)
+    }
+
+    private func handleReminderToggle(newValue: Bool) async {
+        if newValue {
+            let status = await notifications.requestAuthorization()
+            state.reminderAuthorizationStatus = status
+            switch status {
+            case .authorized, .provisional, .ephemeral:
+                state.wantsReminders = true
+                showDeniedNote = false
+                notifications.registerForRemoteNotifications()
+                await notifications.scheduleDailyReminders(
+                    weekdays: state.readingWeekdays,
+                    time: state.reminderTime
+                )
+            default:
+                state.wantsReminders = false
+                showDeniedNote = true
+            }
+        } else {
+            state.wantsReminders = false
+            showDeniedNote = false
+            await notifications.clearScheduledReminders()
+        }
+    }
+
+    private func rescheduleIfActive() {
+        guard state.wantsReminders else { return }
+        Task {
+            await notifications.scheduleDailyReminders(
+                weekdays: state.readingWeekdays,
+                time: state.reminderTime
+            )
         }
     }
 
@@ -77,37 +191,21 @@ struct ScheduleStep: View {
             pickerDate = ScheduleStep.dateFromComponents(state.reminderTime)
             isPickerPresented = true
         } label: {
-            HStack(spacing: Theme.Spacing.base) {
-                Image(systemName: "bell.fill")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(Theme.Palette.rausch)
-                    .frame(width: 44, height: 44)
-                    .background(Theme.Palette.rauschTint)
-                    .clipShape(Circle())
-
-                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                    Text("Reminder time")
-                        .font(Theme.Typography.titleMd)
-                        .foregroundStyle(Theme.Palette.ink)
-                    Text("We'll nudge you on selected days.")
-                        .font(Theme.Typography.bodySm)
-                        .foregroundStyle(Theme.Palette.muted)
-                        .fixedSize(horizontal: false, vertical: true)
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: Theme.Spacing.base) {
+                    reminderIcon
+                    reminderText
+                    Spacer(minLength: Theme.Spacing.sm)
+                    reminderTimePill
                 }
 
-                Spacer(minLength: Theme.Spacing.sm)
-
-                HStack(spacing: Theme.Spacing.xs) {
-                    Text(Self.formatReminderTime(state.reminderTime))
-                        .font(Theme.Typography.buttonMd)
-                    Image(systemName: "chevron.up.chevron.down")
-                        .font(.system(size: 11, weight: .bold))
+                VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                    HStack(alignment: .top, spacing: Theme.Spacing.base) {
+                        reminderIcon
+                        reminderText
+                    }
+                    reminderTimePill
                 }
-                .foregroundStyle(Theme.Palette.ink)
-                .padding(.horizontal, Theme.Spacing.md)
-                .padding(.vertical, Theme.Spacing.sm)
-                .background(Theme.Palette.surfaceSoft)
-                .clipShape(Capsule())
             }
             .padding(Theme.Spacing.base)
             .background(Theme.Palette.surfaceCard)
@@ -124,11 +222,54 @@ struct ScheduleStep: View {
     }
 
     private var quickPresetRow: some View {
-        HStack(spacing: Theme.Spacing.sm) {
-            ForEach(Self.dayPresets) { preset in
-                presetButton(preset)
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: Theme.Spacing.sm) {
+                ForEach(Self.dayPresets) { preset in
+                    presetButton(preset)
+                }
+            }
+
+            VStack(spacing: Theme.Spacing.sm) {
+                ForEach(Self.dayPresets) { preset in
+                    presetButton(preset)
+                }
             }
         }
+    }
+
+    private var reminderIcon: some View {
+        Image(systemName: "bell.fill")
+            .font(.system(size: 17, weight: .semibold))
+            .foregroundStyle(Theme.Palette.rausch)
+            .frame(width: 44, height: 44)
+            .background(Theme.Palette.rauschTint)
+            .clipShape(Circle())
+    }
+
+    private var reminderText: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            Text("Reminder time")
+                .font(Theme.Typography.titleMd)
+                .foregroundStyle(Theme.Palette.ink)
+            Text("We'll nudge you on selected days.")
+                .font(Theme.Typography.bodySm)
+                .foregroundStyle(Theme.Palette.muted)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var reminderTimePill: some View {
+        HStack(spacing: Theme.Spacing.xs) {
+            Text(Self.formatReminderTime(state.reminderTime))
+                .font(Theme.Typography.buttonMd)
+            Image(systemName: "chevron.up.chevron.down")
+                .font(.system(size: 11, weight: .bold))
+        }
+        .foregroundStyle(Theme.Palette.ink)
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.vertical, Theme.Spacing.sm)
+        .background(Theme.Palette.surfaceSoft)
+        .clipShape(Capsule())
     }
 
     private func weekdayChip(_ day: Weekday) -> some View {
@@ -157,7 +298,7 @@ struct ScheduleStep: View {
             .foregroundStyle(selected ? Theme.Palette.canvas : Theme.Palette.ink)
             .padding(.horizontal, Theme.Spacing.md)
             .frame(maxWidth: .infinity)
-            .frame(height: 58)
+            .frame(minHeight: 58)
             .background(selected ? Theme.Palette.rausch : Theme.Palette.surfaceSoft)
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.Radius.button)
@@ -186,6 +327,8 @@ struct ScheduleStep: View {
                 .clipShape(Capsule())
         }
         .buttonStyle(.plain)
+        .accessibilityValue(selected ? "Selected" : "Not selected")
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
     private var pickerSheet: some View {
@@ -207,7 +350,7 @@ struct ScheduleStep: View {
             )
             .datePickerStyle(.wheel)
             .labelsHidden()
-            .frame(maxHeight: 160)
+            .frame(maxHeight: 180)
             .onChange(of: pickerDate) { _, newValue in
                 state.reminderTime = Calendar.current.dateComponents([.hour, .minute], from: newValue)
             }
@@ -280,4 +423,5 @@ private struct DayPreset: Identifiable {
 #Preview {
     ScheduleStep(state: OnboardingState(), onContinue: {})
         .padding()
+        .environment(NotificationsService.shared)
 }

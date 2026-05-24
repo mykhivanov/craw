@@ -112,7 +112,7 @@ struct WelcomeStep: View {
                 .frame(width: 52, height: 52)
                 .clipShape(Circle())
                 .overlay(Circle().stroke(Theme.Palette.canvas, lineWidth: 3))
-                .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: 4)
+                .crawCardShadow()
 
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                 Text("Mike")

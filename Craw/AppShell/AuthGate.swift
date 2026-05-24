@@ -4,6 +4,8 @@ import SwiftUI
 
 struct AuthGate: View {
     @Environment(Clerk.self) private var clerk
+    @Environment(NotificationsService.self) private var notifications
+    @Environment(DeviceRegistrationCoordinator.self) private var deviceRegistration
     @Environment(\.scenePhase) private var scenePhase
 
     @State private var sessionStore: AuthSessionStore = AppEnvironment.makeAuthSessionStore()
@@ -14,8 +16,20 @@ struct AuthGate: View {
             .onChange(of: clerk.user?.id) { _, newID in
                 if newID == nil {
                     sessionStore.reset()
+                    deviceRegistration.sessionDidReset()
+                    Task { await notifications.clearScheduledReminders() }
                 } else {
                     sessionStore.bootstrapIfNeeded()
+                }
+            }
+            .onChange(of: sessionStore.status) { _, newStatus in
+                if case .ready = newStatus {
+                    deviceRegistration.sessionDidBecomeReady()
+                }
+            }
+            .onChange(of: notifications.fcmToken) { _, newToken in
+                if let newToken, !newToken.isEmpty {
+                    deviceRegistration.tokenAvailable(newToken)
                 }
             }
             .onChange(of: scenePhase) { _, phase in
@@ -24,6 +38,7 @@ struct AuthGate: View {
                 }
             }
             .task {
+                await notifications.refreshAuthorizationStatus()
                 if clerk.user != nil {
                     sessionStore.bootstrapIfNeeded()
                 }

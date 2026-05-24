@@ -1,4 +1,5 @@
 import ClerkKit
+import FirebaseCore
 import SwiftData
 import SwiftUI
 
@@ -6,9 +7,15 @@ import SwiftUI
 struct CrawApp: App {
     let container: ModelContainer
 
+    @UIApplicationDelegateAdaptor(CrawAppDelegate.self) private var appDelegate
+
     @State private var sessionEngine: SessionEngine = .shared
+    @State private var notifications: NotificationsService = .shared
+    @State private var deviceRegistration: DeviceRegistrationCoordinator = AppEnvironment
+        .makeDeviceRegistrationCoordinator()
 
     init() {
+        Self.configureFirebase()
         Self.configureURLCache()
         Self.configureClerk()
         container = CrawModelContainer.live()
@@ -25,8 +32,16 @@ struct CrawApp: App {
             AuthGate()
                 .environment(sessionEngine)
                 .environment(Clerk.shared)
+                .environment(notifications)
+                .environment(deviceRegistration)
         }
         .modelContainer(container)
+    }
+
+    private static func configureFirebase() {
+        if FirebaseApp.app() == nil {
+            FirebaseApp.configure()
+        }
     }
 
     private static func configureURLCache() {
