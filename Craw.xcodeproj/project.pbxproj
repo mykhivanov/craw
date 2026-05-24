@@ -12,6 +12,8 @@
 		CA3A58EA2FC2BDE100FF0957 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CA3A58E92FC2BDE100FF0957 /* WidgetKit.framework */; };
 		CA3A58EC2FC2BDE100FF0957 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CA3A58EB2FC2BDE100FF0957 /* SwiftUI.framework */; };
 		CA3A58F92FC2BDE200FF0957 /* CrawWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CA3A58E72FC2BDE100FF0957 /* CrawWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		CA4DDDA62FC35C96002D411D /* DotLottie in Frameworks */ = {isa = PBXBuildFile; productRef = CA4DDDA52FC35C96002D411D /* DotLottie */; };
+		CA4DDDA82FC35C96002D411D /* DotLottiePlayer in Frameworks */ = {isa = PBXBuildFile; productRef = CA4DDDA72FC35C96002D411D /* DotLottiePlayer */; };
 		CA97BA012FC3409800311719 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = CA97BA002FC3409800311719 /* FirebaseCore */; };
 		CA97BA032FC3409800311719 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = CA97BA022FC3409800311719 /* FirebaseMessaging */; };
 /* End PBXBuildFile section */
@@ -100,10 +102,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CA4DDDA82FC35C96002D411D /* DotLottiePlayer in Frameworks */,
 				CA97BA032FC3409800311719 /* FirebaseMessaging in Frameworks */,
 				CA1C581D2FC2813C00C624D4 /* ClerkKit in Frameworks */,
 				CA97BA012FC3409800311719 /* FirebaseCore in Frameworks */,
 				CA1C581F2FC2813C00C624D4 /* ClerkKitUI in Frameworks */,
+				CA4DDDA62FC35C96002D411D /* DotLottie in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -174,6 +178,8 @@
 				CA1C581E2FC2813C00C624D4 /* ClerkKitUI */,
 				CA97BA002FC3409800311719 /* FirebaseCore */,
 				CA97BA022FC3409800311719 /* FirebaseMessaging */,
+				CA4DDDA52FC35C96002D411D /* DotLottie */,
+				CA4DDDA72FC35C96002D411D /* DotLottiePlayer */,
 			);
 			productName = Craw;
 			productReference = CA1C57972FC24A6800C624D4 /* Craw.app */;
@@ -232,6 +238,7 @@
 				CA1C581B2FC2813C00C624D4 /* XCRemoteSwiftPackageReference "clerk-ios" */,
 				CA97B9F72FC33B5500311719 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
 				CA97B9FF2FC3409800311719 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				CA4DDDA42FC35C96002D411D /* XCRemoteSwiftPackageReference "dotlottie-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CA1C57982FC24A6800C624D4 /* Products */;
@@ -605,6 +612,14 @@
 				minimumVersion = 1.1.3;
 			};
 		};
+		CA4DDDA42FC35C96002D411D /* XCRemoteSwiftPackageReference "dotlottie-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/LottieFiles/dotlottie-ios.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 		CA97B9F72FC33B5500311719 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm.git";
@@ -633,6 +648,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = CA1C581B2FC2813C00C624D4 /* XCRemoteSwiftPackageReference "clerk-ios" */;
 			productName = ClerkKitUI;
+		};
+		CA4DDDA52FC35C96002D411D /* DotLottie */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CA4DDDA42FC35C96002D411D /* XCRemoteSwiftPackageReference "dotlottie-ios" */;
+			productName = DotLottie;
+		};
+		CA4DDDA72FC35C96002D411D /* DotLottiePlayer */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CA4DDDA42FC35C96002D411D /* XCRemoteSwiftPackageReference "dotlottie-ios" */;
+			productName = DotLottiePlayer;
 		};
 		CA97BA002FC3409800311719 /* FirebaseCore */ = {
 			isa = XCSwiftPackageProductDependency;
