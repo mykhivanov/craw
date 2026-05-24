@@ -52,6 +52,8 @@ enum Theme {
     enum Typography {
         private static let family = "Airbnb Cereal VF"
 
+        static let displayHuge = Font.custom(family, size: 56).weight(.bold)
+        static let displayNumeric = Font.custom(family, size: 44).weight(.semibold)
         static let displayLg = Font.custom(family, size: 22).weight(.medium)
         static let displaySm = Font.custom(family, size: 20).weight(.semibold)
         static let titleMd = Font.custom(family, size: 16).weight(.semibold)

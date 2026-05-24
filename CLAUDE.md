@@ -25,6 +25,8 @@ Two `Info.plist` keys must be present at launch — both surfaced via Xcode buil
 
 **Mock search (DEBUG):** to exercise the search UI without the backend, launch with `-CrawMockSearch YES`. `MockBookSearchService` returns three fixture results filtered by query substring.
 
+**Skip onboarding (DEBUG):** the app shows a 6-step in-memory onboarding flow before `AuthView` on every cold launch when no Clerk session is restored. To bypass it while iterating on auth or post-auth flows, launch with `-CrawSkipOnboarding YES`. `OnboardingState.shouldSkipFromLaunchArgs` is `#if DEBUG`-only so release builds always render the flow. Onboarding answers are intentionally not persisted — killing and re-launching the app restarts the flow at step 1.
+
 ## Build & run
 
 This is an Xcode-managed project (`Craw.xcodeproj`) — there is no top-level `Package.swift`, but SwiftPM dependencies (e.g., `clerk-ios`) are pulled in via Xcode's "Add Package Dependencies". There are no tests yet (no test target in the project).

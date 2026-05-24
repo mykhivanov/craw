@@ -7,6 +7,7 @@ struct AuthGate: View {
     @Environment(\.scenePhase) private var scenePhase
 
     @State private var sessionStore: AuthSessionStore = AppEnvironment.makeAuthSessionStore()
+    @State private var onboardingState: OnboardingState = .init()
 
     var body: some View {
         contentForState
@@ -34,7 +35,12 @@ struct AuthGate: View {
         if !clerk.isLoaded {
             SplashView()
         } else if clerk.user == nil {
-            AuthView(mode: .signInOrUp, isDismissable: false)
+            if onboardingState.isCompleted || OnboardingState.shouldSkipFromLaunchArgs {
+                AuthView(mode: .signInOrUp, isDismissable: false)
+            } else {
+                OnboardingView()
+                    .environment(onboardingState)
+            }
         } else {
             RootView()
                 .environment(sessionStore)
