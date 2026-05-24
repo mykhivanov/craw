@@ -2,11 +2,12 @@ import Foundation
 import Observation
 
 enum OnboardingGoal: String, CaseIterable, Identifiable {
+    case nextLevelPartner
+    case replaceDoomScrolling
     case habit
     case smarter
     case consistent
     case track
-    case replaceDoomScrolling
 
     var id: String {
         rawValue
@@ -14,6 +15,7 @@ enum OnboardingGoal: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
+        case .nextLevelPartner: "Become worthy of next-level love"
         case .habit: "Build a daily reading habit"
         case .smarter: "Read to get sharper"
         case .consistent: "Read consistently every week"
@@ -24,6 +26,7 @@ enum OnboardingGoal: String, CaseIterable, Identifiable {
 
     var subtitle: String {
         switch self {
+        case .nextLevelPartner: "Grow into the partner you want to attract — sharper, grounded, and in your own league."
         case .habit: "Turn a small daily minimum into an automatic routine."
         case .smarter: "Capture ideas, quotes, and takeaways you can use later."
         case .consistent: "Keep momentum even when your week gets busy."
@@ -34,6 +37,7 @@ enum OnboardingGoal: String, CaseIterable, Identifiable {
 
     var icon: String {
         switch self {
+        case .nextLevelPartner: "heart.circle.fill"
         case .habit: "flame.fill"
         case .smarter: "brain.head.profile"
         case .consistent: "calendar.badge.checkmark"

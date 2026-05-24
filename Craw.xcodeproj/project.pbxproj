@@ -224,6 +224,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				CA1C581B2FC2813C00C624D4 /* XCRemoteSwiftPackageReference "clerk-ios" */,
+				CA97B9F72FC33B5500311719 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CA1C57982FC24A6800C624D4 /* Products */;
@@ -595,6 +596,14 @@
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 1.1.3;
+			};
+		};
+		CA97B9F72FC33B5500311719 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.74.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

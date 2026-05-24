@@ -6,9 +6,9 @@ struct GoalStep: View {
 
     var body: some View {
         OnboardingStepScaffold(
-            eyebrow: "Your why",
+            eyebrow: "",
             title: "What should Craw help you change?",
-            subtitle: "Pick every goal that fits. Your answers shape the plan we build in the next steps.",
+            subtitle: "",
             onContinue: onContinue
         ) {
             VStack(spacing: Theme.Spacing.sm) {

@@ -15,7 +15,7 @@ struct DailyTimeStep: View {
         OnboardingStepScaffold(
             eyebrow: "Daily minimum",
             title: "Choose a target you can win today.",
-            subtitle: "Small daily reps beat heroic sprints. Start with a number that feels almost too easy.",
+            subtitle: "",
             onContinue: onContinue
         ) {
             VStack(alignment: .leading, spacing: Theme.Spacing.base) {

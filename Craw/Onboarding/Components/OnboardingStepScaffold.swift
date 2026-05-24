@@ -61,11 +61,13 @@ struct OnboardingStepScaffold<Content: View>: View {
                 .foregroundStyle(Theme.Palette.ink)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Text(subtitle)
-                .font(Theme.Typography.bodyMd)
-                .foregroundStyle(Theme.Palette.body)
-                .lineSpacing(2)
-                .fixedSize(horizontal: false, vertical: true)
+            if !subtitle.isEmpty {
+                Text(subtitle)
+                    .font(Theme.Typography.bodyMd)
+                    .foregroundStyle(Theme.Palette.body)
+                    .lineSpacing(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 }

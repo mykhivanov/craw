@@ -6,26 +6,31 @@ struct HowToReadStep: View {
     private let principles: [Principle] = [
         .init(
             icon: "iphone.slash",
-            title: "Clear the runway",
-            subtitle: "Put the phone away before you start. Reading needs fewer interruptions, not more willpower."
+            text: "Remove distractions before you start — especially social media."
         ),
         .init(
-            icon: "highlighter",
-            title: "Catch the useful ideas",
-            subtitle: "Save quotes, thoughts, and moments that feel worth returning to."
+            icon: "book.closed.fill",
+            text: "Don't just finish pages — understand them."
+        ),
+        .init(
+            icon: "quote.bubble.fill",
+            text: "Note if an idea or quote feels important."
         ),
         .init(
             icon: "text.bubble.fill",
-            title: "Explain it back",
-            subtitle: "A short summary in your own words turns finished pages into remembered ideas."
+            text: "Summarize in your own words so you remember what you read."
+        ),
+        .init(
+            icon: "timer",
+            text: "Pace yourself: take a short break every 20–30 minutes."
         )
     ]
 
     var body: some View {
         OnboardingStepScaffold(
-            eyebrow: "The Craw method",
-            title: "Don’t just finish pages. Keep the signal.",
-            subtitle: "Use this simple loop whenever you read: focus, capture, remember.",
+            eyebrow: "How to read",
+            title: "Read with focus, not just speed.",
+            subtitle: "A few simple rules make every session easier to start and easier to remember.",
             onContinue: onContinue
         ) {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
@@ -46,12 +51,10 @@ struct HowToReadStep: View {
                 .clipShape(Circle())
 
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                Text(principle.title)
-                    .font(Theme.Typography.titleMd)
-                    .foregroundStyle(Theme.Palette.ink)
-                Text(principle.subtitle)
-                    .font(Theme.Typography.bodySm)
+                Text(principle.text)
+                    .font(Theme.Typography.bodyMd)
                     .foregroundStyle(Theme.Palette.body)
+                    .lineSpacing(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -68,8 +71,7 @@ struct HowToReadStep: View {
 private struct Principle: Identifiable {
     let id = UUID()
     let icon: String
-    let title: String
-    let subtitle: String
+    let text: String
 }
 
 #Preview {
