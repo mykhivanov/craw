@@ -36,6 +36,7 @@ struct PaywallView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
                 header
+                founderNote
                 qaBlock(
                     question: "What are you paying for?",
                     answer: "AI, infrastructure, and ongoing development to make your experience best in class."
@@ -89,7 +90,7 @@ struct PaywallView: View {
     private func qaBlock(question: String, answer: String) -> some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             Text(question)
-                .font(Theme.Typography.titleMd)
+                .font(Theme.Typography.displaySm)
                 .foregroundStyle(Theme.Palette.ink)
             Text(answer)
                 .font(Theme.Typography.bodyMd)
@@ -98,8 +99,143 @@ struct PaywallView: View {
         }
         .padding(Theme.Spacing.base)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Palette.surfaceSoft)
+        .background(qaBlockBackground)
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.card)
+                .stroke(Theme.Palette.hairlineSoft, lineWidth: 1)
+        )
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card))
+        .crawCardShadow()
+    }
+
+    private var qaBlockBackground: some View {
+        ZStack(alignment: .topTrailing) {
+            Theme.Palette.surfaceCard
+
+            Circle()
+                .fill(Theme.Palette.rauschTint)
+                .frame(width: 120, height: 120)
+                .offset(x: 34, y: -52)
+
+            LinearGradient(
+                colors: [
+                    Theme.Palette.rauschTint.opacity(0.55),
+                    Theme.Palette.canvas
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+    }
+
+    private var founderNote: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
+            founderNoteHeader
+            founderNoteBody
+
+            Divider()
+                .background(Theme.Palette.hairlineSoft)
+
+            founderSignatureRow
+        }
+        .padding(.horizontal, Theme.Spacing.lg)
+        .padding(.vertical, Theme.Spacing.xl)
+        .background(founderNoteBackground)
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.card)
+                .stroke(Theme.Palette.hairlineSoft, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card))
+        .crawCardShadow()
+    }
+
+    private var founderNoteHeader: some View {
+        HStack(alignment: .top) {
+            Text("Founder note")
+                .font(Theme.Typography.badge)
+                .foregroundStyle(Theme.Palette.rausch)
+                .textCase(.uppercase)
+                .tracking(0.8)
+                .padding(.horizontal, Theme.Spacing.md)
+                .padding(.vertical, Theme.Spacing.sm)
+                .background(Theme.Palette.rauschTint)
+                .clipShape(Capsule())
+
+            Spacer(minLength: Theme.Spacing.base)
+
+            Image(systemName: "quote.opening")
+                .font(.system(size: 34, weight: .bold))
+                .foregroundStyle(Theme.Palette.rausch)
+                .accessibilityHidden(true)
+        }
+    }
+
+    private var founderNoteBody: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.base) {
+            Text("I didn't want to flood this page with marketing.")
+                .font(Theme.Typography.bodyMd)
+                .foregroundStyle(Theme.Palette.body)
+                .lineSpacing(3)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text(
+                "If you're deciding whether to subscribe, you only need answers to two questions — they're right below this note."
+            )
+            .font(Theme.Typography.bodyLg)
+            .foregroundStyle(Theme.Palette.ink)
+            .lineSpacing(4)
+            .fixedSize(horizontal: false, vertical: true)
+
+            Text(
+                "Thank you for supporting the development. Every subscription helps me keep building Craw and grows the readers' community around it. I genuinely believe we can make this community big — and have fun doing it together."
+            )
+            .font(Theme.Typography.bodyMd)
+            .foregroundStyle(Theme.Palette.body)
+            .lineSpacing(3)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var founderSignatureRow: some View {
+        HStack(spacing: Theme.Spacing.md) {
+            Image("mike")
+                .resizable()
+                .scaledToFill()
+                .frame(width: 52, height: 52)
+                .clipShape(Circle())
+                .overlay(Circle().stroke(Theme.Palette.canvas, lineWidth: 3))
+                .crawCardShadow()
+
+            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                Text("Mike")
+                    .font(Theme.Typography.titleMd)
+                    .foregroundStyle(Theme.Palette.ink)
+                Text("creator of Craw")
+                    .font(Theme.Typography.captionSm)
+                    .foregroundStyle(Theme.Palette.muted)
+            }
+
+            Spacer()
+
+            Image(systemName: "book.closed.fill")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Theme.Palette.rausch)
+                .frame(width: 38, height: 38)
+                .background(Theme.Palette.rauschTint)
+                .clipShape(Circle())
+                .accessibilityHidden(true)
+        }
+    }
+
+    private var founderNoteBackground: some View {
+        ZStack(alignment: .topTrailing) {
+            Theme.Palette.surfaceCard
+
+            Circle()
+                .fill(Theme.Palette.rauschTint)
+                .frame(width: 150, height: 150)
+                .offset(x: 58, y: -58)
+        }
     }
 
     private func cta(package: Package) -> some View {
