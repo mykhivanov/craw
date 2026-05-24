@@ -5,9 +5,7 @@ struct MascotEmptyTile: View {
 
     var body: some View {
         VStack(spacing: Theme.Spacing.md) {
-            Image("mascot")
-                .resizable()
-                .scaledToFit()
+            MascotView(mascot: .birdFlying)
                 .frame(height: 160)
                 .accessibilityHidden(true)
 

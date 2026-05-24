@@ -6,9 +6,7 @@ struct QuotesEmptyState: View {
             Spacer(minLength: 0)
 
             VStack(spacing: Theme.Spacing.md) {
-                Image("mascot")
-                    .resizable()
-                    .scaledToFit()
+                MascotView(mascot: .owl)
                     .frame(height: 160)
                     .accessibilityHidden(true)
 

@@ -3,10 +3,8 @@ import SwiftUI
 struct QuotesMascotHeader: View {
     var body: some View {
         HStack(spacing: Theme.Spacing.md) {
-            Image("mascot")
-                .resizable()
-                .scaledToFit()
-                .frame(height: 64)
+            MascotView(mascot: .pigeon)
+                .frame(width: 64, height: 64)
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
