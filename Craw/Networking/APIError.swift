@@ -8,6 +8,7 @@ enum APIError: Error {
     case network(URLError)
     case decoding(Error)
     case cancelled
+    case feedbackAlreadySubmitted
 }
 
 extension APIError {
@@ -27,6 +28,8 @@ extension APIError {
             "Received an unexpected response. Please try again."
         case .cancelled:
             ""
+        case .feedbackAlreadySubmitted:
+            "Feedback already submitted."
         }
     }
 }

@@ -16,6 +16,7 @@
 		CA4DDDA82FC35C96002D411D /* DotLottiePlayer in Frameworks */ = {isa = PBXBuildFile; productRef = CA4DDDA72FC35C96002D411D /* DotLottiePlayer */; };
 		CA97BA012FC3409800311719 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = CA97BA002FC3409800311719 /* FirebaseCore */; };
 		CA97BA032FC3409800311719 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = CA97BA022FC3409800311719 /* FirebaseMessaging */; };
+		CA97BA112FC34A0100311719 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = CA97BA102FC34A0100311719 /* RevenueCat */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -108,6 +109,7 @@
 				CA97BA012FC3409800311719 /* FirebaseCore in Frameworks */,
 				CA1C581F2FC2813C00C624D4 /* ClerkKitUI in Frameworks */,
 				CA4DDDA62FC35C96002D411D /* DotLottie in Frameworks */,
+				CA97BA112FC34A0100311719 /* RevenueCat in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -180,6 +182,7 @@
 				CA97BA022FC3409800311719 /* FirebaseMessaging */,
 				CA4DDDA52FC35C96002D411D /* DotLottie */,
 				CA4DDDA72FC35C96002D411D /* DotLottiePlayer */,
+				CA97BA102FC34A0100311719 /* RevenueCat */,
 			);
 			productName = Craw;
 			productReference = CA1C57972FC24A6800C624D4 /* Craw.app */;
@@ -668,6 +671,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = CA97B9FF2FC3409800311719 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseMessaging;
+		};
+		CA97BA102FC34A0100311719 /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CA97B9F72FC33B5500311719 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCat;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

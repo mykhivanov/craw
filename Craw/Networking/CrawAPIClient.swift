@@ -53,6 +53,90 @@ actor CrawAPIClient {
         )
     }
 
+    func submitFeedback(_ submission: APIFeedbackSubmission) async throws -> APIUser {
+        let bodyData = try encoder.encode(submission)
+        return try await performWithBody(
+            path: "/users/me/feedback",
+            method: "POST",
+            bodyData: bodyData
+        )
+    }
+
+    func deleteAccount() async throws {
+        try await sendNoContent(path: "/users/me", method: "DELETE")
+    }
+
+    private func sendNoContent(path: String, method: String) async throws {
+        do {
+            try await sendDiscardingResponse(
+                path: path,
+                method: method,
+                bodyData: nil,
+                forceRefreshToken: false
+            )
+        } catch APIError.unauthorized {
+            try await sendDiscardingResponse(
+                path: path,
+                method: method,
+                bodyData: nil,
+                forceRefreshToken: true
+            )
+        }
+    }
+
+    private func sendDiscardingResponse(
+        path: String,
+        method: String,
+        bodyData: Data?,
+        forceRefreshToken: Bool
+    ) async throws {
+        try Task.checkCancellation()
+        let token = try await tokenProvider.currentToken(forceRefresh: forceRefreshToken)
+        let request = try buildRequest(
+            path: path,
+            method: method,
+            query: [],
+            bodyData: bodyData,
+            token: token
+        )
+        let response: URLResponse
+        let data: Data
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch let urlError as URLError where urlError.code == .cancelled {
+            throw APIError.cancelled
+        } catch is CancellationError {
+            throw APIError.cancelled
+        } catch let urlError as URLError {
+            throw APIError.network(urlError)
+        }
+        guard let http = response as? HTTPURLResponse else {
+            throw APIError.server(message: "Invalid response", code: nil)
+        }
+        try mapStatus(data: data, response: http)
+    }
+
+    private func mapStatus(data: Data, response: HTTPURLResponse) throws {
+        switch response.statusCode {
+        case 200..<300:
+            return
+        case 401:
+            throw APIError.unauthorized
+        case 404:
+            throw APIError.notFound
+        case 409:
+            throw APIError.feedbackAlreadySubmitted
+        case 429:
+            let retry = response.value(forHTTPHeaderField: "Retry-After").flatMap(TimeInterval.init)
+            throw APIError.rateLimited(retryAfter: retry)
+        default:
+            if let body = try? decoder.decode(APIErrorBody.self, from: data) {
+                throw APIError.server(message: body.message, code: body.code)
+            }
+            throw APIError.server(message: "HTTP \(response.statusCode)", code: nil)
+        }
+    }
+
     private func performGet<Response: Decodable>(
         path: String,
         method: String,
@@ -176,6 +260,8 @@ actor CrawAPIClient {
             throw APIError.unauthorized
         case 404:
             throw APIError.notFound
+        case 409:
+            throw APIError.feedbackAlreadySubmitted
         case 429:
             let retry = response.value(forHTTPHeaderField: "Retry-After").flatMap(TimeInterval.init)
             throw APIError.rateLimited(retryAfter: retry)

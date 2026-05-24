@@ -6,6 +6,7 @@ struct AuthGate: View {
     @Environment(Clerk.self) private var clerk
     @Environment(NotificationsService.self) private var notifications
     @Environment(DeviceRegistrationCoordinator.self) private var deviceRegistration
+    @Environment(SubscriptionStore.self) private var subscriptionStore
     @Environment(\.scenePhase) private var scenePhase
 
     @State private var sessionStore: AuthSessionStore = AppEnvironment.makeAuthSessionStore()
@@ -14,12 +15,14 @@ struct AuthGate: View {
     var body: some View {
         contentForState
             .onChange(of: clerk.user?.id) { _, newID in
-                if newID == nil {
+                if let newID {
+                    sessionStore.bootstrapIfNeeded()
+                    Task { await subscriptionStore.identify(clerkUserID: newID) }
+                } else {
                     sessionStore.reset()
                     deviceRegistration.sessionDidReset()
                     Task { await notifications.clearScheduledReminders() }
-                } else {
-                    sessionStore.bootstrapIfNeeded()
+                    Task { await subscriptionStore.signOut() }
                 }
             }
             .onChange(of: sessionStore.status) { _, newStatus in

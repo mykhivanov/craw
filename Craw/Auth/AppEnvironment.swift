@@ -22,6 +22,21 @@ enum AppEnvironment {
         return value
     }()
 
+    static let revenueCatPublicKey: String = {
+        let value = Bundle.main.infoDictionary?["REVENUECAT_PUBLIC_KEY"] as? String ?? ""
+        #if DEBUG
+            if value.isEmpty {
+                return "test_WcxHMahbebtdRdqPzupwQZHjRIz"
+            }
+        #else
+            assert(
+                !value.isEmpty,
+                "REVENUECAT_PUBLIC_KEY is missing from Info.plist in a RELEASE build."
+            )
+        #endif
+        return value
+    }()
+
     static let liveAPIClient: CrawAPIClient = .init(
         baseURL: apiBaseURL,
         tokenProvider: ClerkAuthTokenProvider()
@@ -32,6 +47,11 @@ enum AppEnvironment {
         AuthSessionStore(apiClient: liveAPIClient) {
             Task { try? await Clerk.shared.auth.signOut() }
         }
+    }
+
+    @MainActor
+    static func makeSubscriptionStore() -> SubscriptionStore {
+        SubscriptionStore()
     }
 
     @MainActor

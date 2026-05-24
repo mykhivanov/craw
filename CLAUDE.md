@@ -10,18 +10,21 @@ The app gates the dashboard behind a Clerk-authenticated session (`AuthGate` →
 
 ## Required configuration
 
-Two `Info.plist` keys must be present at launch — both surfaced via Xcode build settings (`INFOPLIST_KEY_<NAME>` becomes a top-level `Info.plist` entry under `GENERATE_INFOPLIST_FILE = YES`):
+Three `Info.plist` keys must be present at launch. `CLERK_PUBLISHABLE_KEY` is surfaced via the Xcode build setting `INFOPLIST_KEY_CLERK_PUBLISHABLE_KEY`; `CRAW_API_BASE_URL` and `REVENUECAT_PUBLIC_KEY` are written directly into the committed `Craw/Info.plist` for local dev convenience:
 
-| Key                       | Purpose                                                                            | Default if unset           |
-| ------------------------- | ---------------------------------------------------------------------------------- | -------------------------- |
-| `CLERK_PUBLISHABLE_KEY`   | Clerk dashboard → API Keys → Publishable key. Assertion fires in DEBUG if missing. | none (asserts)             |
-| `CRAW_API_BASE_URL`       | Backend base URL. Override in staging.                                             | `https://api.craw.app/v1`  |
+| Key                       | Purpose                                                                            | Default if unset                                                          |
+| ------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `CLERK_PUBLISHABLE_KEY`   | Clerk dashboard → API Keys → Publishable key. Assertion fires in DEBUG if missing. | none (asserts)                                                            |
+| `CRAW_API_BASE_URL`       | Backend base URL. Override in staging.                                             | `https://api.craw.app/v1`                                                 |
+| `REVENUECAT_PUBLIC_KEY`   | RevenueCat dashboard → Project settings → Apple App Store → Public app-specific key. Drives the paywall + monthly subscription. | DEBUG falls back to the embedded test key (`test_WcxHMahbebtdRdqPzupwQZHjRIz`); RELEASE asserts. |
 
 **Local setup:** in Xcode, select the Craw target → Build Settings → search "INFOPLIST_KEY" → add `INFOPLIST_KEY_CLERK_PUBLISHABLE_KEY = pk_test_...`. For CI, plumb the value through xcconfig substitution so the key is never committed to git.
 
 **Clerk dashboard:** under "Native Applications" register the iOS app with bundle id `com.mykhivanov.Craw` and add the redirect URL `com.mykhivanov.Craw://clerk-callback`. The matching URL scheme `com.mykhivanov.Craw` must also be registered in `Info.plist`'s `CFBundleURLTypes` — `INFOPLIST_KEY_*` build settings don't cover structural array-of-dict entries, so add the URL scheme via Xcode → target → Info → URL Types (or create a real `Info.plist` file and point `INFOPLIST_FILE` at it).
 
 **SwiftPM dependency:** Clerk is consumed via `https://github.com/clerk/clerk-ios` — add via Xcode → File → Add Package Dependencies. Add both `ClerkKit` and `ClerkKitUI` products to the Craw target.
+
+**RevenueCat dependency:** RevenueCat is consumed via `https://github.com/RevenueCat/purchases-ios-spm.git` (already added as a package reference in `Craw.xcodeproj`). The `RevenueCat` product must be linked to the Craw target — Xcode → Craw target → General → Frameworks, Libraries, and Embedded Content → `+` → choose `RevenueCat`. A single auto-renewing monthly product `com.mykhivanov.Craw.monthly` is configured in App Store Connect and mapped in the RevenueCat dashboard to entitlement `craw_pro` under offering `default`.
 
 **Mock search (DEBUG):** to exercise the search UI without the backend, launch with `-CrawMockSearch YES`. `MockBookSearchService` returns three fixture results filtered by query substring.
 

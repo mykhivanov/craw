@@ -6,6 +6,22 @@ struct APIUser: Decodable, Equatable {
     let displayName: String
     let createdAt: Date
     let library: APILibrary
+    let feedback: String?
+    let feedbackSubmittedAt: Date?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case email
+        case displayName
+        case createdAt
+        case library
+        case feedback
+        case feedbackSubmittedAt = "feedback_submitted_at"
+    }
+}
+
+struct APIFeedbackSubmission: Encodable {
+    let feedback: String
 }
 
 struct APILibrary: Decodable, Equatable {

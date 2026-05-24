@@ -30,4 +30,14 @@ enum CrawModelContainer {
     static func previewInMemory() -> ModelContainer {
         make(inMemory: true)
     }
+
+    static func wipeAllUserData(context: ModelContext) throws {
+        try context.delete(model: Book.self)
+        try context.delete(model: ReadingDay.self)
+        try context.delete(model: ReadingSession.self)
+        try context.delete(model: SessionRetrospective.self)
+        try context.delete(model: Quote.self)
+        try context.delete(model: Thought.self)
+        try context.save()
+    }
 }

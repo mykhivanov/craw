@@ -1,5 +1,6 @@
 import ClerkKit
 import FirebaseCore
+import RevenueCat
 import SwiftData
 import SwiftUI
 
@@ -13,11 +14,13 @@ struct CrawApp: App {
     @State private var notifications: NotificationsService = .shared
     @State private var deviceRegistration: DeviceRegistrationCoordinator = AppEnvironment
         .makeDeviceRegistrationCoordinator()
+    @State private var subscriptionStore: SubscriptionStore = AppEnvironment.makeSubscriptionStore()
 
     init() {
         Self.configureFirebase()
         Self.configureURLCache()
         Self.configureClerk()
+        Self.configureRevenueCat()
         container = CrawModelContainer.live()
         LiveActivityActionObserver.shared.start()
         #if DEBUG
@@ -34,6 +37,7 @@ struct CrawApp: App {
                 .environment(Clerk.shared)
                 .environment(notifications)
                 .environment(deviceRegistration)
+                .environment(subscriptionStore)
         }
         .modelContainer(container)
     }
@@ -63,5 +67,14 @@ struct CrawApp: App {
                 )
             )
         )
+    }
+
+    private static func configureRevenueCat() {
+        #if DEBUG
+            Purchases.logLevel = .info
+        #else
+            Purchases.logLevel = .warn
+        #endif
+        Purchases.configure(withAPIKey: AppEnvironment.revenueCatPublicKey)
     }
 }

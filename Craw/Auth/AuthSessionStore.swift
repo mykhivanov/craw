@@ -44,6 +44,15 @@ final class AuthSessionStore {
         status = .idle
     }
 
+    var cachedUser: APIUser? {
+        if case let .ready(user) = status { return user }
+        return nil
+    }
+
+    func applyUpdatedUser(_ user: APIUser) {
+        status = .ready(user)
+    }
+
     private func runBootstrap() async {
         do {
             let user = try await apiClient.bootstrapSession()
