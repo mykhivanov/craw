@@ -9,10 +9,40 @@
 /* Begin PBXBuildFile section */
 		CA1C581D2FC2813C00C624D4 /* ClerkKit in Frameworks */ = {isa = PBXBuildFile; productRef = CA1C581C2FC2813C00C624D4 /* ClerkKit */; };
 		CA1C581F2FC2813C00C624D4 /* ClerkKitUI in Frameworks */ = {isa = PBXBuildFile; productRef = CA1C581E2FC2813C00C624D4 /* ClerkKitUI */; };
+		CA3A58EA2FC2BDE100FF0957 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CA3A58E92FC2BDE100FF0957 /* WidgetKit.framework */; };
+		CA3A58EC2FC2BDE100FF0957 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CA3A58EB2FC2BDE100FF0957 /* SwiftUI.framework */; };
+		CA3A58F92FC2BDE200FF0957 /* CrawWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CA3A58E72FC2BDE100FF0957 /* CrawWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		CA3A58F72FC2BDE200FF0957 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CA1C578F2FC24A6800C624D4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CA3A58E62FC2BDE100FF0957;
+			remoteInfo = CrawWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		CA3A58FE2FC2BDE200FF0957 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				CA3A58F92FC2BDE200FF0957 /* CrawWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		CA1C57972FC24A6800C624D4 /* Craw.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Craw.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CA3A58E72FC2BDE100FF0957 /* CrawWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CrawWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		CA3A58E92FC2BDE100FF0957 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		CA3A58EB2FC2BDE100FF0957 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -23,6 +53,24 @@
 			);
 			target = CA1C57962FC24A6800C624D4 /* Craw */;
 		};
+		CA3A58FD2FC2BDE200FF0957 /* Exceptions for "CrawWidget" folder in "CrawWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = CA3A58E62FC2BDE100FF0957 /* CrawWidgetExtension */;
+		};
+		CA3A59072FC2BFF200FF0957 /* Exceptions for "Craw" folder in "CrawWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Session/LiveActivity/Shared/LiveActivityActions.swift,
+				Session/LiveActivity/Shared/PauseSessionIntent.swift,
+				Session/LiveActivity/Shared/ReadingActivityAttributes.swift,
+				Session/LiveActivity/Shared/ResumeSessionIntent.swift,
+				Session/LiveActivity/Shared/StopFromLockScreenIntent.swift,
+			);
+			target = CA3A58E62FC2BDE100FF0957 /* CrawWidgetExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -30,8 +78,17 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				CA1C58442FC285BF00C624D4 /* Exceptions for "Craw" folder in "Craw" target */,
+				CA3A59072FC2BFF200FF0957 /* Exceptions for "Craw" folder in "CrawWidgetExtension" target */,
 			);
 			path = Craw;
+			sourceTree = "<group>";
+		};
+		CA3A58ED2FC2BDE100FF0957 /* CrawWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				CA3A58FD2FC2BDE200FF0957 /* Exceptions for "CrawWidget" folder in "CrawWidgetExtension" target */,
+			);
+			path = CrawWidget;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -46,6 +103,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CA3A58E42FC2BDE100FF0957 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CA3A58EC2FC2BDE100FF0957 /* SwiftUI.framework in Frameworks */,
+				CA3A58EA2FC2BDE100FF0957 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -53,6 +119,8 @@
 			isa = PBXGroup;
 			children = (
 				CA1C57992FC24A6800C624D4 /* Craw */,
+				CA3A58ED2FC2BDE100FF0957 /* CrawWidget */,
+				CA3A58E82FC2BDE100FF0957 /* Frameworks */,
 				CA1C57982FC24A6800C624D4 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -61,8 +129,18 @@
 			isa = PBXGroup;
 			children = (
 				CA1C57972FC24A6800C624D4 /* Craw.app */,
+				CA3A58E72FC2BDE100FF0957 /* CrawWidgetExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		CA3A58E82FC2BDE100FF0957 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				CA3A58E92FC2BDE100FF0957 /* WidgetKit.framework */,
+				CA3A58EB2FC2BDE100FF0957 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -76,10 +154,12 @@
 				CA1C57942FC24A6800C624D4 /* Frameworks */,
 				CA1C57952FC24A6800C624D4 /* Resources */,
 				BB1A57500000000000000001 /* SwiftLint */,
+				CA3A58FE2FC2BDE200FF0957 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				CA3A58F82FC2BDE200FF0957 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				CA1C57992FC24A6800C624D4 /* Craw */,
@@ -93,6 +173,28 @@
 			productReference = CA1C57972FC24A6800C624D4 /* Craw.app */;
 			productType = "com.apple.product-type.application";
 		};
+		CA3A58E62FC2BDE100FF0957 /* CrawWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CA3A58FA2FC2BDE200FF0957 /* Build configuration list for PBXNativeTarget "CrawWidgetExtension" */;
+			buildPhases = (
+				CA3A58E32FC2BDE100FF0957 /* Sources */,
+				CA3A58E42FC2BDE100FF0957 /* Frameworks */,
+				CA3A58E52FC2BDE100FF0957 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				CA3A58ED2FC2BDE100FF0957 /* CrawWidget */,
+			);
+			name = CrawWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = CrawWidgetExtension;
+			productReference = CA3A58E72FC2BDE100FF0957 /* CrawWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -104,6 +206,9 @@
 				LastUpgradeCheck = 2650;
 				TargetAttributes = {
 					CA1C57962FC24A6800C624D4 = {
+						CreatedOnToolsVersion = 26.5;
+					};
+					CA3A58E62FC2BDE100FF0957 = {
 						CreatedOnToolsVersion = 26.5;
 					};
 				};
@@ -126,12 +231,20 @@
 			projectRoot = "";
 			targets = (
 				CA1C57962FC24A6800C624D4 /* Craw */,
+				CA3A58E62FC2BDE100FF0957 /* CrawWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		CA1C57952FC24A6800C624D4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CA3A58E52FC2BDE100FF0957 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -170,7 +283,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CA3A58E32FC2BDE100FF0957 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		CA3A58F82FC2BDE200FF0957 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CA3A58E62FC2BDE100FF0957 /* CrawWidgetExtension */;
+			targetProxy = CA3A58F72FC2BDE200FF0957 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		CA1C57A02FC24A6900C624D4 /* Debug */ = {
@@ -366,6 +494,68 @@
 			};
 			name = Release;
 		};
+		CA3A58FB2FC2BDE200FF0957 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KG2SLH3R7W;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CrawWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = CrawWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mykhivanov.Craw.CrawWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		CA3A58FC2FC2BDE200FF0957 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KG2SLH3R7W;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CrawWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = CrawWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mykhivanov.Craw.CrawWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -383,6 +573,15 @@
 			buildConfigurations = (
 				CA1C57A32FC24A6900C624D4 /* Debug */,
 				CA1C57A42FC24A6900C624D4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CA3A58FA2FC2BDE200FF0957 /* Build configuration list for PBXNativeTarget "CrawWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CA3A58FB2FC2BDE200FF0957 /* Debug */,
+				CA3A58FC2FC2BDE200FF0957 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
