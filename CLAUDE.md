@@ -4,11 +4,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-**Craw** — a SwiftUI iOS/iPadOS app (universal: `TARGETED_DEVICE_FAMILY = "1,2"`). Bundle ID `com.mykhivanov.Craw`. Built with Xcode 26.5, deployment target iOS 26.5, Swift 5.10. The current source is scaffolding only (`Craw/CrawApp.swift` + a stub `Craw/ContentView.swift` rendering "Hello, world!").
+**Craw** — a SwiftUI iOS/iPadOS app (universal: `TARGETED_DEVICE_FAMILY = "1,2"`). Bundle ID `com.mykhivanov.Craw`. Built with Xcode 26.5, deployment target iOS 26.5, Swift 5.10.
+
+The app gates the dashboard behind a Clerk-authenticated session (`AuthGate` → splash → `AuthView` → `RootView`). Book search hits a custom backend at `https://api.craw.app/v1` via `CrawAPIClient`, which attaches the current Clerk JWT to every request. Library, reading sessions, quotes, thoughts, and activity remain local-only in SwiftData (the backend's `User` resource is hydrated with the library structure for future sync — see `openspec/changes/add-auth-and-book-search/api-contract.yaml`).
+
+## Required configuration
+
+Two `Info.plist` keys must be present at launch — both surfaced via Xcode build settings (`INFOPLIST_KEY_<NAME>` becomes a top-level `Info.plist` entry under `GENERATE_INFOPLIST_FILE = YES`):
+
+| Key                       | Purpose                                                                            | Default if unset           |
+| ------------------------- | ---------------------------------------------------------------------------------- | -------------------------- |
+| `CLERK_PUBLISHABLE_KEY`   | Clerk dashboard → API Keys → Publishable key. Assertion fires in DEBUG if missing. | none (asserts)             |
+| `CRAW_API_BASE_URL`       | Backend base URL. Override in staging.                                             | `https://api.craw.app/v1`  |
+
+**Local setup:** in Xcode, select the Craw target → Build Settings → search "INFOPLIST_KEY" → add `INFOPLIST_KEY_CLERK_PUBLISHABLE_KEY = pk_test_...`. For CI, plumb the value through xcconfig substitution so the key is never committed to git.
+
+**Clerk dashboard:** under "Native Applications" register the iOS app with bundle id `com.mykhivanov.Craw` and add the redirect URL `com.mykhivanov.Craw://clerk-callback`. The matching URL scheme `com.mykhivanov.Craw` must also be registered in `Info.plist`'s `CFBundleURLTypes` — `INFOPLIST_KEY_*` build settings don't cover structural array-of-dict entries, so add the URL scheme via Xcode → target → Info → URL Types (or create a real `Info.plist` file and point `INFOPLIST_FILE` at it).
+
+**SwiftPM dependency:** Clerk is consumed via `https://github.com/clerk/clerk-ios` — add via Xcode → File → Add Package Dependencies. Add both `ClerkKit` and `ClerkKitUI` products to the Craw target.
+
+**Mock search (DEBUG):** to exercise the search UI without the backend, launch with `-CrawMockSearch YES`. `MockBookSearchService` returns three fixture results filtered by query substring.
 
 ## Build & run
 
-This is an Xcode-managed project (`Craw.xcodeproj`) — there is no SwiftPM `Package.swift`. There are no tests yet (no test target in the project).
+This is an Xcode-managed project (`Craw.xcodeproj`) — there is no top-level `Package.swift`, but SwiftPM dependencies (e.g., `clerk-ios`) are pulled in via Xcode's "Add Package Dependencies". There are no tests yet (no test target in the project).
 
 ```bash
 # Inspect targets / schemes

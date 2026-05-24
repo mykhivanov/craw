@@ -1,0 +1,684 @@
+openapi: 3.1.0
+
+info:
+  title: Craw API
+  version: 1.0.0
+  summary: Backend API consumed by the Craw iOS app.
+  description: |
+    Backend contract for the Craw iOS app. The surface is intentionally small:
+    a single auth-bootstrap endpoint plus three endpoint sets — current-user CRUD,
+    book search, and book quiz.
+
+    ## Endpoints consumed by the `add-auth-and-book-search` change
+    - `POST /auth/session` — bootstrap on sign-in
+    - `GET /books/search` — search-to-add flow
+
+    The other endpoints (`GET /user`, `PATCH /user`, `DELETE /user`, `GET /books/quiz`)
+    are forward-locked here so the next iOS change can plug in without contract churn.
+
+    ## Authentication
+    Every endpoint requires `Authorization: Bearer <clerk-session-jwt>`. The backend
+    MUST verify the JWT against Clerk's JWKS for the configured publishable key.
+    Reject with `401 UNAUTHORIZED` on missing / malformed / expired / signature- /
+    audience-mismatched tokens. The Clerk `sub` claim is the canonical user id.
+
+    There is no refresh-token endpoint — Clerk handles JWT refresh client-side.
+
+    ## Conventions
+    - JSON keys are `snake_case`. The Swift client maps to `camelCase` via
+      `JSONDecoder.keyDecodingStrategy = .convertFromSnakeCase`.
+    - Timestamps are ISO 8601 with fractional seconds and UTC offset:
+      `2026-05-24T14:33:21.123Z`.
+    - Resource IDs are server-generated ULIDs (26-char Crockford base32),
+      prefixed by type (`lb_`, `bk_`, `qz_`). The `User.id` is Clerk's `user_…`
+      sub claim, not a ULID.
+    - Optional client telemetry header `X-Craw-Client: ios/<app-version>+<build>`.
+
+    ## Rate limits
+    - Search: 60 req/min per user
+    - Quiz: 30 req/min per user
+    - User read/write: 120 req/min per user
+
+    Backend MUST emit `Retry-After` (seconds) on `429`.
+
+    ## Library reads, writes, and local-data semantics
+    The `User` resource is **fully hydrated** on every endpoint that returns it
+    (bootstrap, GET, PATCH) — `library.in_progress` and `library.finished` are
+    always present (possibly empty `[]`, never null).
+
+    The contract defines **no endpoint to add, update, or delete a `LibraryBook`** in v1.
+    The app writes to local SwiftData (per the `book-library` capability). A future
+    contract revision will add either:
+      1. an extension of `PATCH /user` accepting a `library` mutation payload, or
+      2. a new "set 4" — `POST / PATCH / DELETE /user/library`.
+
+    `LibraryBook.status` is server-derived from `current_page` and `total_pages`
+    (`not_started` ⇔ 0; `in_progress` ⇔ 0 < current < total; `finished` ⇔ current >= total).
+    Clients SHALL NOT send `status` independently when writes are added.
+
+    `DELETE /user` removes the backend `User` record and all owned `LibraryBook`
+    rows. The app is responsible for clearing local SwiftData separately.
+
+    ## Versioning
+    Breaking changes require a new prefix `/v2`. Additive optional fields are NOT
+    breaking. Adding new endpoint sets is NOT breaking. Removing or restricting
+    fields IS breaking.
+
+  contact:
+    name: Craw iOS
+    email: mykhivanov@gmail.com
+
+servers:
+  - url: https://api.craw.app/v1
+    description: Production
+  - url: https://api.staging.craw.app/v1
+    description: Staging
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Auth
+    description: Backend session bootstrap.
+  - name: User
+    description: Current authenticated user (no `{user_id}` path parameter — the JWT identifies the user).
+  - name: Books
+    description: Catalog search and quiz generation.
+
+paths:
+
+  /auth/session:
+    post:
+      operationId: bootstrapSession
+      tags: [Auth]
+      summary: Bootstrap a backend record for the authenticated user.
+      description: |
+        Called once at app launch after Clerk reports `isLoaded == true` and
+        `user != nil`. Idempotent — calling repeatedly returns the existing
+        `User` record. Returns the library on bootstrap so a returning user
+        lands on a populated dashboard with one network round-trip.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+      responses:
+        '200':
+          description: User record (fully hydrated with `library`). On first call the backend mints the record; on subsequent calls the existing record is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /user:
+    get:
+      operationId: getCurrentUser
+      tags: [User]
+      summary: Return the current authenticated user, fully hydrated.
+      description: |
+        Returns the `User` with `library.in_progress` and `library.finished` arrays
+        populated per the sorting and bucketing rules on the `Library` schema.
+
+        Returns `404` when `POST /auth/session` has not yet been called for this user.
+      responses:
+        '200':
+          description: User record (fully hydrated).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+              examples:
+                with_library:
+                  summary: User with one in-progress and one finished book
+                  value:
+                    id: user_2abc...
+                    email: alex@example.com
+                    display_name: Alex Reader
+                    created_at: 2026-05-01T09:00:00.000Z
+                    library:
+                      in_progress:
+                        - id: lb_01HXYZ
+                          book_id: bk_01HXYZ
+                          title: Atomic Habits
+                          author: James Clear
+                          total_pages: 320
+                          current_page: 42
+                          status: in_progress
+                          progress_percent: 13.1
+                          cover_image_url: https://covers.craw.app/atomic-habits.jpg
+                          isbn: '9780735211292'
+                          description: null
+                          published_year: 2018
+                          language: en
+                          date_added: 2026-05-22T08:11:02.000Z
+                          date_started: 2026-05-23T20:04:11.000Z
+                          date_finished: null
+                          last_read_at: 2026-05-24T19:42:00.000Z
+                      finished:
+                        - id: lb_01HABC
+                          book_id: bk_01HABC
+                          title: Deep Work
+                          author: Cal Newport
+                          total_pages: 296
+                          current_page: 296
+                          status: finished
+                          progress_percent: 100.0
+                          cover_image_url: https://covers.craw.app/deep-work.jpg
+                          isbn: '9781455586691'
+                          description: null
+                          published_year: 2016
+                          language: en
+                          date_added: 2026-04-02T07:11:02.000Z
+                          date_started: 2026-04-03T20:04:11.000Z
+                          date_finished: 2026-04-29T22:11:00.000Z
+                          last_read_at: 2026-04-29T22:11:00.000Z
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      operationId: updateCurrentUser
+      tags: [User]
+      summary: Update mutable fields on the current user.
+      description: |
+        Currently the only mutable field is `display_name`. Email is owned by Clerk
+        and is not editable here. The library is NOT mutated by this endpoint in v1
+        (library writes are deferred — see the contract description).
+
+        Response is the same fully-hydrated `User` shape as `GET /user` so the
+        client can refresh both profile and library from a single response.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPatchRequest'
+      responses:
+        '200':
+          description: Updated user (fully hydrated).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+
+    delete:
+      operationId: deleteCurrentUser
+      tags: [User]
+      summary: Delete the current user's backend record.
+      description: |
+        Removes the user's backend `User` row and all owned `LibraryBook` rows.
+        The backend SHOULD also revoke Clerk sessions for this user (server-to-server)
+        so future requests with a stale JWT return 401.
+
+        The app SHOULD call `Clerk.shared.auth.signOut()` immediately after a
+        successful response. Local SwiftData on the device is the app's
+        responsibility to clear separately.
+      responses:
+        '204':
+          description: User deleted.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /books/search:
+    get:
+      operationId: searchBooks
+      tags: [Books]
+      summary: Search the catalog by free-text query.
+      description: |
+        Backend owns the upstream catalog integration (e.g., Google Books) and
+        normalization. The client never talks to upstream providers directly.
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 256
+          description: Free-text query. Whitespace is trimmed by the server.
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 50
+        - in: query
+          name: offset
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+      responses:
+        '200':
+          description: A page of catalog books. `items` MAY be empty. `next_offset` is null when no further results exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookSearchResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '502':
+          $ref: '#/components/responses/UpstreamUnavailable'
+
+  /books/quiz:
+    get:
+      operationId: getBookQuiz
+      tags: [Books]
+      summary: Get a comprehension quiz for a book.
+      description: |
+        Returns a generated comprehension quiz for a book identified by name
+        plus optional disambiguating details. Used by the post-session quiz
+        feature.
+
+        Resolution order (server side):
+          1. If `isbn` is supplied, resolve by ISBN exactly.
+          2. Otherwise resolve by `(title, author?)` against the same catalog
+             used by `GET /books/search`.
+          3. If no match, return `404 NOT_FOUND`.
+
+        Each question has exactly 4 choices. `answer_index` is the zero-based
+        index of the correct choice. v1 evaluates client-side.
+      parameters:
+        - in: query
+          name: title
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 256
+        - in: query
+          name: author
+          required: false
+          schema:
+            type: string
+            maxLength: 256
+          description: Improves disambiguation when multiple works share a title.
+        - in: query
+          name: isbn
+          required: false
+          schema:
+            type: string
+            pattern: '^(97[89])?\d{9}[\dXx]$'
+          description: ISBN-10 or ISBN-13. Preferred over title when present.
+        - in: query
+          name: start_page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+          description: Inclusive. Scopes the quiz to a page range.
+        - in: query
+          name: end_page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+          description: Inclusive. MUST be >= start_page when both are supplied.
+        - in: query
+          name: num_questions
+          required: false
+          schema:
+            type: integer
+            default: 5
+            minimum: 1
+            maximum: 10
+        - in: query
+          name: language
+          required: false
+          schema:
+            type: string
+          description: BCP-47 language tag. Defaults to the book's language or "en".
+      responses:
+        '200':
+          description: Generated quiz.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quiz'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '502':
+          $ref: '#/components/responses/UpstreamUnavailable'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Clerk-issued session JWT. The backend verifies the token against Clerk's
+        JWKS for the configured publishable key. The Clerk `sub` claim is the
+        canonical user identifier.
+
+  schemas:
+
+    User:
+      type: object
+      required: [id, email, display_name, created_at, library]
+      properties:
+        id:
+          type: string
+          description: Clerk user id (sub claim).
+          example: user_2abc...
+        email:
+          type: string
+          format: email
+        display_name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        library:
+          $ref: '#/components/schemas/Library'
+
+    Library:
+      type: object
+      description: |
+        The user's library, bucketed by reading status. Both arrays are always
+        present (possibly empty `[]`, never null). Each array is capped at 100
+        entries in v1.
+      required: [in_progress, finished]
+      properties:
+        in_progress:
+          type: array
+          maxItems: 100
+          description: |
+            Books with `status` of `not_started` or `in_progress`, sorted by
+            `last_read_at` descending with `date_added` descending as a tiebreaker.
+          items:
+            $ref: '#/components/schemas/LibraryBook'
+        finished:
+          type: array
+          maxItems: 100
+          description: |
+            Books with `status` of `finished`, sorted by `date_finished` descending.
+          items:
+            $ref: '#/components/schemas/LibraryBook'
+
+    LibraryBook:
+      type: object
+      description: |
+        A book in the user's library, hydrated with every field the Home dashboard
+        and book detail screen need. `status` is server-derived from `current_page`
+        and `total_pages`.
+      required:
+        - id
+        - title
+        - author
+        - total_pages
+        - current_page
+        - status
+        - progress_percent
+        - date_added
+      properties:
+        id:
+          type: string
+          example: lb_01HXYZ...
+          description: Library entry id (per-user).
+        book_id:
+          type: [string, 'null']
+          description: Catalog book id this entry references. Null for free-form entries.
+          example: bk_01HXYZ...
+        title:
+          type: string
+        author:
+          type: string
+          description: Pre-joined. Defaults to "Unknown author" when missing upstream.
+        total_pages:
+          type: integer
+          minimum: 1
+        current_page:
+          type: integer
+          minimum: 0
+        status:
+          type: string
+          enum: [not_started, in_progress, finished]
+        progress_percent:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 100.0
+          description: Server-computed `round(current_page / total_pages * 100, 1)`.
+        cover_image_url:
+          type: [string, 'null']
+          format: uri
+          description: HTTPS URL or null. Never `http://`.
+        isbn:
+          type: [string, 'null']
+          description: ISBN-13 preferred over ISBN-10.
+        description:
+          type: [string, 'null']
+          description: Optional markdown plain text.
+        published_year:
+          type: [integer, 'null']
+        language:
+          type: [string, 'null']
+          description: BCP-47 language tag.
+        date_added:
+          type: string
+          format: date-time
+        date_started:
+          type: [string, 'null']
+          format: date-time
+          description: First reading-session timestamp. Null when never read.
+        date_finished:
+          type: [string, 'null']
+          format: date-time
+          description: ISO timestamp when status flipped to finished. Null otherwise.
+        last_read_at:
+          type: [string, 'null']
+          format: date-time
+          description: Last reading-session end timestamp. Null when never read.
+
+    Book:
+      type: object
+      description: |
+        A catalog entry returned by `GET /books/search`. Has no per-user state
+        (no `current_page`, no `status`). To represent a user's progress on a
+        book, see `LibraryBook`.
+      required: [id, title, author, total_pages]
+      properties:
+        id:
+          type: string
+          example: bk_01HXYZ...
+          description: Backend catalog id, opaque to the client.
+        title:
+          type: string
+        author:
+          type: string
+          description: Pre-joined. Defaults to "Unknown author" when missing upstream.
+        total_pages:
+          type: integer
+          minimum: 1
+          description: Server-defaulted when upstream metadata is missing.
+        cover_image_url:
+          type: [string, 'null']
+          format: uri
+        isbn:
+          type: [string, 'null']
+        description:
+          type: [string, 'null']
+        published_year:
+          type: [integer, 'null']
+        language:
+          type: [string, 'null']
+          description: BCP-47 language tag.
+
+    BookSearchResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Book'
+        next_offset:
+          type: [integer, 'null']
+          description: Offset to use for the next page. Null when no further results.
+
+    Quiz:
+      type: object
+      required: [quiz_id, questions]
+      properties:
+        quiz_id:
+          type: string
+          example: qz_01HXYZ...
+        questions:
+          type: array
+          minItems: 1
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/QuizQuestion'
+
+    QuizQuestion:
+      type: object
+      required: [id, prompt, choices, answer_index]
+      properties:
+        id:
+          type: string
+          example: q1
+        prompt:
+          type: string
+        choices:
+          type: array
+          minItems: 4
+          maxItems: 4
+          items:
+            type: string
+        answer_index:
+          type: integer
+          minimum: 0
+          maximum: 3
+          description: Zero-based index of the correct choice. v1 evaluates client-side.
+
+    UserPatchRequest:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      description: |
+        At least one mutable field must be supplied. Email is owned by Clerk and
+        not editable here. The library is NOT mutated by this endpoint in v1.
+      properties:
+        display_name:
+          type: string
+          minLength: 1
+          maxLength: 64
+
+    ApiError:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          enum:
+            - UNAUTHORIZED
+            - FORBIDDEN
+            - NOT_FOUND
+            - VALIDATION_FAILED
+            - RATE_LIMITED
+            - UPSTREAM_UNAVAILABLE
+            - INTERNAL_ERROR
+        message:
+          type: string
+          description: Human-readable English message.
+        details:
+          type: object
+          additionalProperties: true
+          description: 'Optional structured details (e.g., `{ "field": "display_name" }`).'
+
+  responses:
+
+    Unauthorized:
+      description: Bearer token missing, invalid, or expired.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+          example:
+            code: UNAUTHORIZED
+            message: Invalid or expired session token
+
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+          example:
+            code: NOT_FOUND
+            message: User record not found. Call POST /auth/session first.
+
+    ValidationFailed:
+      description: Request validation failed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+          example:
+            code: VALIDATION_FAILED
+            message: display_name must be 1–64 characters
+            details:
+              field: display_name
+
+    RateLimited:
+      description: Too many requests.
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds until the next request is allowed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+          example:
+            code: RATE_LIMITED
+            message: Too many search requests. Try again in 30 seconds.
+
+    UpstreamUnavailable:
+      description: Upstream catalog provider is unavailable.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+          example:
+            code: UPSTREAM_UNAVAILABLE
+            message: Book catalog provider is temporarily unavailable.
+
+    InternalError:
+      description: Server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+          example:
+            code: INTERNAL_ERROR
+            message: Something went wrong.

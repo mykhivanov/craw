@@ -6,13 +6,31 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		CA1C581D2FC2813C00C624D4 /* ClerkKit in Frameworks */ = {isa = PBXBuildFile; productRef = CA1C581C2FC2813C00C624D4 /* ClerkKit */; };
+		CA1C581F2FC2813C00C624D4 /* ClerkKitUI in Frameworks */ = {isa = PBXBuildFile; productRef = CA1C581E2FC2813C00C624D4 /* ClerkKitUI */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		CA1C57972FC24A6800C624D4 /* Craw.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Craw.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		CA1C58442FC285BF00C624D4 /* Exceptions for "Craw" folder in "Craw" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = CA1C57962FC24A6800C624D4 /* Craw */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		CA1C57992FC24A6800C624D4 /* Craw */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				CA1C58442FC285BF00C624D4 /* Exceptions for "Craw" folder in "Craw" target */,
+			);
 			path = Craw;
 			sourceTree = "<group>";
 		};
@@ -23,6 +41,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CA1C581D2FC2813C00C624D4 /* ClerkKit in Frameworks */,
+				CA1C581F2FC2813C00C624D4 /* ClerkKitUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -66,6 +86,8 @@
 			);
 			name = Craw;
 			packageProductDependencies = (
+				CA1C581C2FC2813C00C624D4 /* ClerkKit */,
+				CA1C581E2FC2813C00C624D4 /* ClerkKitUI */,
 			);
 			productName = Craw;
 			productReference = CA1C57972FC24A6800C624D4 /* Craw.app */;
@@ -95,6 +117,9 @@
 			);
 			mainGroup = CA1C578E2FC24A6800C624D4;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				CA1C581B2FC2813C00C624D4 /* XCRemoteSwiftPackageReference "clerk-ios" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CA1C57982FC24A6800C624D4 /* Products */;
 			projectDirPath = "";
@@ -274,11 +299,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLERK_PUBLISHABLE_KEY = pk_test_YWN0dWFsLXNoZXBoZXJkLTIuY2xlcmsuYWNjb3VudHMuZGV2JA;
+				CODE_SIGN_ENTITLEMENTS = Craw/Craw.entitlements;
 				CODE_SIGN_STYLE = Automatic;
+				CRAW_API_BASE_URL = "https://66cd-2a02-a311-80d1-1c80-b95f-cfcf-cc74-dec2.ngrok-free.app";
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = KG2SLH3R7W;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Craw/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -306,11 +335,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLERK_PUBLISHABLE_KEY = pk_test_YWN0dWFsLXNoZXBoZXJkLTIuY2xlcmsuYWNjb3VudHMuZGV2JA;
+				CODE_SIGN_ENTITLEMENTS = Craw/Craw.entitlements;
 				CODE_SIGN_STYLE = Automatic;
+				CRAW_API_BASE_URL = "https://66cd-2a02-a311-80d1-1c80-b95f-cfcf-cc74-dec2.ngrok-free.app";
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = KG2SLH3R7W;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Craw/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -355,6 +388,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		CA1C581B2FC2813C00C624D4 /* XCRemoteSwiftPackageReference "clerk-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/clerk/clerk-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		CA1C581C2FC2813C00C624D4 /* ClerkKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CA1C581B2FC2813C00C624D4 /* XCRemoteSwiftPackageReference "clerk-ios" */;
+			productName = ClerkKit;
+		};
+		CA1C581E2FC2813C00C624D4 /* ClerkKitUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CA1C581B2FC2813C00C624D4 /* XCRemoteSwiftPackageReference "clerk-ios" */;
+			productName = ClerkKitUI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = CA1C578F2FC24A6800C624D4 /* Project object */;
 }

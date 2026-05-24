@@ -11,6 +11,8 @@ struct HomeDashboardView: View {
     @Query(sort: [SortDescriptor(\ReadingDay.date, order: .reverse)])
     private var readingDays: [ReadingDay]
 
+    @State private var isSearchPresented = false
+
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: Theme.Spacing.lg) {
@@ -28,19 +30,22 @@ struct HomeDashboardView: View {
             BookDetailView(book: book)
         }
         .toolbar(.hidden, for: .navigationBar)
+        .sheet(isPresented: $isSearchPresented) {
+            BookSearchView()
+        }
     }
 
     @ViewBuilder
     private var bookSections: some View {
         if inProgressBooks.isEmpty, finishedBooks.isEmpty {
-            LibraryEmptyState(onAddTapped: addBookPlaceholder)
+            LibraryEmptyState(onAddTapped: presentSearch)
         } else {
             BookListSection(
                 title: "Reading Now",
                 books: inProgressBooks,
                 showsAddButton: true,
-                onAddTapped: addBookPlaceholder,
-                emptyContent: { AnyView(ReadingNowEmptyState(onAddTapped: addBookPlaceholder)) }
+                onAddTapped: presentSearch,
+                emptyContent: { AnyView(ReadingNowEmptyState(onAddTapped: presentSearch)) }
             )
             if !finishedBooks.isEmpty {
                 BookListSection(
@@ -52,8 +57,8 @@ struct HomeDashboardView: View {
         }
     }
 
-    private func addBookPlaceholder() {
-        // Book creation is owned by a future change. No-op for now.
+    private func presentSearch() {
+        isSearchPresented = true
     }
 }
 

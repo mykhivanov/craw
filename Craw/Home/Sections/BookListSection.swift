@@ -66,7 +66,7 @@ struct BookRow: View {
 
     var body: some View {
         HStack(spacing: Theme.Spacing.md) {
-            CoverPlaceholder(coverAssetName: book.coverAssetName)
+            CoverPlaceholder(coverAssetName: book.coverAssetName, coverImageURL: book.coverImageURL)
                 .frame(width: 52, height: 72)
                 .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.button))
             VStack(alignment: .leading, spacing: 2) {
@@ -98,20 +98,39 @@ struct BookRow: View {
 
 struct CoverPlaceholder: View {
     let coverAssetName: String?
+    let coverImageURL: URL?
+
+    init(coverAssetName: String?, coverImageURL: URL? = nil) {
+        self.coverAssetName = coverAssetName
+        self.coverImageURL = coverImageURL
+    }
 
     var body: some View {
         ZStack {
             Theme.Palette.surfaceStrong
-            if let coverAssetName, UIImage(named: coverAssetName) != nil {
+            if let coverImageURL {
+                AsyncImage(url: coverImageURL) { phase in
+                    switch phase {
+                    case let .success(image):
+                        image.resizable().scaledToFill()
+                    default:
+                        placeholderGlyph
+                    }
+                }
+            } else if let coverAssetName, UIImage(named: coverAssetName) != nil {
                 Image(coverAssetName)
                     .resizable()
                     .scaledToFill()
             } else {
-                Image(systemName: "book.closed")
-                    .font(.system(size: 18, weight: .regular))
-                    .foregroundStyle(Theme.Palette.mutedSoft)
+                placeholderGlyph
             }
         }
+    }
+
+    private var placeholderGlyph: some View {
+        Image(systemName: "book.closed")
+            .font(.system(size: 18, weight: .regular))
+            .foregroundStyle(Theme.Palette.mutedSoft)
     }
 }
 

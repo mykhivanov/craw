@@ -41,7 +41,7 @@ struct BookDetailView: View {
 
     private var heroSection: some View {
         VStack(spacing: Theme.Spacing.base) {
-            CoverPlaceholder(coverAssetName: book.coverAssetName)
+            CoverPlaceholder(coverAssetName: book.coverAssetName, coverImageURL: book.coverImageURL)
                 .frame(width: 120, height: 168)
                 .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card))
             VStack(spacing: Theme.Spacing.xxs) {

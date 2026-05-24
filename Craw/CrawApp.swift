@@ -1,3 +1,4 @@
+import ClerkKit
 import SwiftData
 import SwiftUI
 
@@ -8,6 +9,8 @@ struct CrawApp: App {
     @State private var sessionEngine = SessionEngine()
 
     init() {
+        Self.configureURLCache()
+        Self.configureClerk()
         container = CrawModelContainer.live()
         #if DEBUG
             if SampleData.isLaunchArgumentEnabled {
@@ -18,9 +21,31 @@ struct CrawApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView()
+            AuthGate()
                 .environment(sessionEngine)
+                .environment(Clerk.shared)
         }
         .modelContainer(container)
+    }
+
+    private static func configureURLCache() {
+        URLCache.shared = URLCache(
+            memoryCapacity: 10 * 1024 * 1024,
+            diskCapacity: 50 * 1024 * 1024,
+            diskPath: "craw-url-cache"
+        )
+    }
+
+    private static func configureClerk() {
+        let key = AppEnvironment.clerkPublishableKey
+        Clerk.configure(
+            publishableKey: key,
+            options: Clerk.Options(
+                redirectConfig: .init(
+                    redirectUrl: "com.mykhivanov.Craw://clerk-callback",
+                    callbackUrlScheme: "com.mykhivanov.Craw"
+                )
+            )
+        )
     }
 }
