@@ -4,6 +4,8 @@ enum Theme {
     enum Palette {
         static let rausch = Color(hex: 0xFF385C)
         static let rauschActive = Color(hex: 0xE00B41)
+        static let rauschDisabled = Color(hex: 0xFFD1DA)
+        static let rauschTint = Color(hex: 0xFFF1F4)
         static let ink = Color(hex: 0x222222)
         static let body = Color(hex: 0x3F3F3F)
         static let muted = Color(hex: 0x6A6A6A)
@@ -54,10 +56,12 @@ enum Theme {
 
         static let displayHuge = Font.custom(family, size: 56).weight(.bold)
         static let displayNumeric = Font.custom(family, size: 44).weight(.semibold)
+        static let onboardingHero = Font.custom(family, size: 32).weight(.semibold)
         static let displayLg = Font.custom(family, size: 22).weight(.medium)
         static let displaySm = Font.custom(family, size: 20).weight(.semibold)
         static let titleMd = Font.custom(family, size: 16).weight(.semibold)
         static let titleSm = Font.custom(family, size: 16).weight(.medium)
+        static let bodyLg = Font.custom(family, size: 18).weight(.regular)
         static let bodyMd = Font.custom(family, size: 16).weight(.regular)
         static let bodySm = Font.custom(family, size: 14).weight(.regular)
         static let caption = Font.custom(family, size: 14).weight(.medium)

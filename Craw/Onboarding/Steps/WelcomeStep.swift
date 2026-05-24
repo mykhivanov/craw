@@ -3,70 +3,104 @@ import SwiftUI
 struct WelcomeStep: View {
     let onContinue: () -> Void
 
-    private let quoteBody: String = """
-    I built this because I struggled with reading too.
-    Motivation does not work. Discipline does.
-
-    I knew books could make me sharper, more focused, and more intentional — but I often lost momentum, got distracted, or read without really absorbing much.
-
-    Whether you're building the habit or already read often, this app is here to
-    A) help you read consistently
-    B) get more from every book.
-    """
-
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
-            Text("Welcome 👋")
-                .font(Theme.Typography.displayLg)
-                .foregroundStyle(Theme.Palette.ink)
-
-            quoteBlock
-
-            Spacer(minLength: Theme.Spacing.lg)
-
-            OnboardingPrimaryButton(title: "Continue", action: onContinue)
+        OnboardingStepScaffold(
+            eyebrow: "Welcome to Craw",
+            title: "Read more. Remember more.",
+            subtitle: "Build a simple reading system that keeps you moving, even when motivation drops.",
+            buttonTitle: "Start building",
+            onContinue: onContinue
+        ) {
+            VStack(spacing: Theme.Spacing.base) {
+                planCard
+                founderNote
+            }
         }
     }
 
-    private var quoteBlock: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-            HStack(alignment: .top, spacing: Theme.Spacing.md) {
-                Text("\u{201C}")
-                    .font(Theme.Typography.displayHuge)
-                    .foregroundStyle(Theme.Palette.rausch)
-                    .frame(width: 28, alignment: .topLeading)
-                    .offset(y: -8)
+    private var planCard: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.base) {
+            Text("Your plan starts here")
+                .font(Theme.Typography.displaySm)
+                .foregroundStyle(Theme.Palette.ink)
 
-                Text(quoteBody)
-                    .font(Theme.Typography.bodyMd)
-                    .italic()
-                    .foregroundStyle(Theme.Palette.body)
-                    .fixedSize(horizontal: false, vertical: true)
+            VStack(spacing: Theme.Spacing.md) {
+                benefitRow(
+                    icon: "flame.fill",
+                    title: "Set the minimum",
+                    subtitle: "Choose a daily target you can actually keep."
+                )
+                benefitRow(
+                    icon: "calendar",
+                    title: "Protect the time",
+                    subtitle: "Pick reading days before your calendar steals them."
+                )
+                benefitRow(
+                    icon: "quote.bubble.fill",
+                    title: "Keep the insight",
+                    subtitle: "Capture the ideas that make each book worth it."
+                )
             }
-
-            HStack(spacing: Theme.Spacing.md) {
-                Image("mike")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 40, height: 40)
-                    .clipShape(Circle())
-                    .overlay(Circle().stroke(Theme.Palette.hairline, lineWidth: 1))
-
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("Mike")
-                        .font(Theme.Typography.titleMd)
-                        .foregroundStyle(Theme.Palette.ink)
-                    Text("creator of Craw")
-                        .font(Theme.Typography.captionSm)
-                        .foregroundStyle(Theme.Palette.muted)
-                }
-            }
-            .padding(.leading, 40)
         }
-        .padding(.horizontal, Theme.Spacing.base)
-        .padding(.vertical, Theme.Spacing.base)
+        .padding(Theme.Spacing.lg)
         .background(Theme.Palette.surfaceSoft)
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card))
+    }
+
+    private var founderNote: some View {
+        HStack(alignment: .top, spacing: Theme.Spacing.md) {
+            Image("mike")
+                .resizable()
+                .scaledToFill()
+                .frame(width: 48, height: 48)
+                .clipShape(Circle())
+                .overlay(Circle().stroke(Theme.Palette.hairlineSoft, lineWidth: 1))
+
+            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                Text("Motivation fades. Systems stay.")
+                    .font(Theme.Typography.titleMd)
+                    .foregroundStyle(Theme.Palette.ink)
+
+                Text("I built Craw to help you read consistently and leave every book with something you can remember.")
+                    .font(Theme.Typography.bodySm)
+                    .foregroundStyle(Theme.Palette.body)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text("Mike, creator of Craw")
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(Theme.Palette.muted)
+                    .padding(.top, Theme.Spacing.xs)
+            }
+        }
+        .padding(.vertical, Theme.Spacing.base)
+        .padding(.horizontal, Theme.Spacing.base)
+        .background(Theme.Palette.surfaceCard)
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.card)
+                .stroke(Theme.Palette.hairlineSoft, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card))
+    }
+
+    private func benefitRow(icon: String, title: String, subtitle: String) -> some View {
+        HStack(alignment: .top, spacing: Theme.Spacing.md) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Theme.Palette.rausch)
+                .frame(width: 34, height: 34)
+                .background(Theme.Palette.canvas)
+                .clipShape(Circle())
+
+            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                Text(title)
+                    .font(Theme.Typography.titleMd)
+                    .foregroundStyle(Theme.Palette.ink)
+                Text(subtitle)
+                    .font(Theme.Typography.bodySm)
+                    .foregroundStyle(Theme.Palette.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
     }
 }
 

@@ -4,23 +4,21 @@ struct OnboardingView: View {
     @Environment(OnboardingState.self) private var state
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
-            HStack {
-                Spacer()
-                OnboardingDotProgress(count: OnboardingState.stepCount, active: state.stepIndex)
-                Spacer()
-            }
-            .padding(.top, Theme.Spacing.sm)
+        VStack(spacing: Theme.Spacing.base) {
+            OnboardingDotProgress(count: OnboardingState.stepCount, active: state.stepIndex)
+                .padding(.top, Theme.Spacing.sm)
 
             currentStep
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                .transition(.opacity)
-                .animation(.easeInOut(duration: 0.2), value: state.stepIndex)
+                .id(state.stepIndex)
+                .transition(.opacity.combined(with: .move(edge: .trailing)))
         }
         .padding(.horizontal, Theme.Spacing.lg)
         .padding(.bottom, Theme.Spacing.lg)
+        .frame(maxWidth: 560, maxHeight: .infinity)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Theme.Palette.canvas.ignoresSafeArea())
+        .animation(.spring(response: 0.35, dampingFraction: 0.9), value: state.stepIndex)
     }
 
     @ViewBuilder

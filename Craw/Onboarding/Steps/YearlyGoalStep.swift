@@ -5,34 +5,26 @@ struct YearlyGoalStep: View {
     let onContinue: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
-            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                Text("Final goal 📚")
-                    .font(Theme.Typography.displayLg)
-                    .foregroundStyle(Theme.Palette.ink)
-                Text("How many books do you want to finish this year?")
-                    .font(Theme.Typography.bodyMd)
-                    .foregroundStyle(Theme.Palette.body)
-            }
-
+        OnboardingStepScaffold(
+            eyebrow: "Annual target",
+            title: "Finish stronger this year.",
+            subtitle: "Choose a yearly target. Craw will turn it into a pace that feels actionable week by week.",
+            buttonTitle: "Finish setup",
+            isButtonEnabled: state.yearlyGoal != nil,
+            onContinue: onContinue
+        ) {
             VStack(spacing: Theme.Spacing.md) {
                 ForEach(YearlyGoal.allCases) { goal in
                     OnboardingSelectableCard(
-                        label: goal.label,
+                        icon: goal.icon,
+                        title: goal.label,
+                        subtitle: goal.subtitle,
                         isSelected: state.yearlyGoal == goal
                     ) {
                         state.yearlyGoal = goal
                     }
                 }
             }
-
-            Spacer(minLength: Theme.Spacing.lg)
-
-            OnboardingPrimaryButton(
-                title: "Continue",
-                isEnabled: state.yearlyGoal != nil,
-                action: onContinue
-            )
         }
     }
 }

@@ -5,45 +5,34 @@ struct GoalStep: View {
     let onContinue: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
-            Text("Pick your goal 📋")
-                .font(Theme.Typography.displayLg)
-                .foregroundStyle(Theme.Palette.ink)
-
+        OnboardingStepScaffold(
+            eyebrow: "Your why",
+            title: "What should Craw help you change?",
+            subtitle: "Pick every goal that fits. Your answers shape the plan we build in the next steps.",
+            onContinue: onContinue
+        ) {
             VStack(spacing: Theme.Spacing.sm) {
                 ForEach(OnboardingGoal.allCases) { goal in
-                    goalRow(goal)
+                    OnboardingSelectableCard(
+                        icon: goal.icon,
+                        title: goal.label,
+                        subtitle: goal.subtitle,
+                        isSelected: state.selectedGoals.contains(goal)
+                    ) {
+                        toggle(goal)
+                    }
                 }
             }
-
-            Spacer(minLength: Theme.Spacing.lg)
-
-            OnboardingPrimaryButton(title: "Continue", action: onContinue)
         }
     }
 
-    private func goalRow(_ goal: OnboardingGoal) -> some View {
+    private func toggle(_ goal: OnboardingGoal) {
         let selected = state.selectedGoals.contains(goal)
-        return Button {
-            if selected {
-                state.selectedGoals.remove(goal)
-            } else {
-                state.selectedGoals.insert(goal)
-            }
-        } label: {
-            HStack(spacing: Theme.Spacing.md) {
-                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 22))
-                    .foregroundStyle(selected ? Theme.Palette.rausch : Theme.Palette.mutedSoft)
-                Text(goal.label)
-                    .font(Theme.Typography.bodyMd)
-                    .foregroundStyle(Theme.Palette.ink)
-                Spacer()
-            }
-            .padding(.vertical, Theme.Spacing.sm)
-            .contentShape(Rectangle())
+        if selected {
+            state.selectedGoals.remove(goal)
+        } else {
+            state.selectedGoals.insert(goal)
         }
-        .buttonStyle(.plain)
     }
 }
 
