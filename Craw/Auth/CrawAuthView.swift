@@ -41,9 +41,7 @@ struct CrawAuthView: View {
             Image("mascotCraw")
                 .resizable()
                 .scaledToFit()
-                .frame(height: 140)
-
-            MascotSpeechBubble(text: "Required to save your progress")
+                .frame(height: 100)
         }
         .frame(maxWidth: .infinity)
     }

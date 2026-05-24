@@ -30,7 +30,7 @@ struct WelcomeStep: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 72, height: 72)
-                .padding(Theme.Spacing.sm)
+                .padding(Theme.Spacing.base)
                 .background(
                     Circle()
                         .fill(Theme.Palette.canvas)
