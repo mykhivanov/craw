@@ -45,22 +45,15 @@ struct PaywallView: View {
                     question: "What do you get?",
                     answer: "Progress quiz to make the best out of it, book suggestions, statistics, competition."
                 )
-                Spacer(minLength: Theme.Spacing.lg)
-                if let error = viewModel.errorMessage {
-                    Text(error)
-                        .font(Theme.Typography.bodySm)
-                        .foregroundStyle(Theme.Palette.trendDown)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                cta(package: package)
-                restoreButton
-                footer
             }
             .padding(.horizontal, Theme.Spacing.base)
             .padding(.top, Theme.Spacing.lg)
-            .padding(.bottom, Theme.Spacing.xl)
+            .padding(.bottom, Theme.Spacing.base)
         }
         .background(Theme.Palette.canvas)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            bottomBar(package: package)
+        }
         .overlay(alignment: .topTrailing) {
             Button {
                 dismiss()
@@ -72,6 +65,31 @@ struct PaywallView: View {
             }
             .accessibilityLabel("Close")
         }
+    }
+
+    private func bottomBar(package: Package) -> some View {
+        VStack(spacing: Theme.Spacing.xs) {
+            if let error = viewModel.errorMessage {
+                Text(error)
+                    .font(Theme.Typography.bodySm)
+                    .foregroundStyle(Theme.Palette.trendDown)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            cta(package: package)
+            restoreButton
+            footer
+        }
+        .padding(.horizontal, Theme.Spacing.base)
+        .padding(.top, Theme.Spacing.md)
+        .background(
+            Theme.Palette.canvas
+                .overlay(
+                    Rectangle()
+                        .fill(Theme.Palette.hairlineSoft)
+                        .frame(height: 1),
+                    alignment: .top
+                )
+        )
     }
 
     private var header: some View {
@@ -185,14 +203,6 @@ struct PaywallView: View {
             .foregroundStyle(Theme.Palette.ink)
             .lineSpacing(4)
             .fixedSize(horizontal: false, vertical: true)
-
-            Text(
-                "Thank you for supporting the development. Every subscription helps me keep building Craw and grows the readers' community around it. I genuinely believe we can make this community big — and have fun doing it together."
-            )
-            .font(Theme.Typography.bodyMd)
-            .foregroundStyle(Theme.Palette.body)
-            .lineSpacing(3)
-            .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -255,13 +265,13 @@ struct PaywallView: View {
                 .font(Theme.Typography.buttonSm)
                 .foregroundStyle(Theme.Palette.muted)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, Theme.Spacing.sm)
+                .padding(.vertical, Theme.Spacing.xs)
         }
         .disabled(viewModel.isRestoring || viewModel.isPurchasing)
     }
 
     private var footer: some View {
-        VStack(spacing: Theme.Spacing.xs) {
+        VStack(spacing: Theme.Spacing.xxs) {
             Text("Subscription auto-renews monthly. Cancel anytime in Settings.")
                 .font(Theme.Typography.captionSm)
                 .foregroundStyle(Theme.Palette.mutedSoft)
@@ -274,7 +284,6 @@ struct PaywallView: View {
             .foregroundStyle(Theme.Palette.muted)
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, Theme.Spacing.sm)
     }
 
     private func purchase(package: Package) async {

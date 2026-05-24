@@ -11,10 +11,39 @@ struct CrawAuthView: View {
                 .padding(.bottom, Theme.Spacing.base)
 
             AuthView(mode: .signInOrUp, isDismissable: false)
+                .environment(\.clerkTheme, clerkTheme)
+                .environment(\.colorScheme, .light)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Theme.Palette.canvas.ignoresSafeArea())
+    }
+
+    private var clerkTheme: ClerkTheme {
+        ClerkTheme(
+            colors: clerkColors,
+            design: .init(borderRadius: Theme.Radius.button)
+        )
+    }
+
+    private var clerkColors: ClerkTheme.Colors {
+        var colors = ClerkTheme.Colors(
+            primary: Theme.Palette.rausch,
+            background: Theme.Palette.canvas,
+            input: Theme.Palette.surfaceSoft,
+            danger: Theme.Palette.trendDown,
+            foreground: Theme.Palette.ink,
+            mutedForeground: Theme.Palette.muted,
+            primaryForeground: .white,
+            inputForeground: Theme.Palette.ink,
+            neutral: Theme.Palette.ink,
+            ring: Theme.Palette.rausch,
+            muted: Theme.Palette.surfaceSoft,
+            shadow: .black,
+            border: Theme.Palette.ink
+        )
+        colors.buttonBorder = Theme.Palette.ink
+        return colors
     }
 
     private var header: some View {
@@ -23,13 +52,6 @@ struct CrawAuthView: View {
                 .font(Theme.Typography.microLabel)
                 .foregroundStyle(Theme.Palette.rausch)
                 .tracking(0.6)
-
-            Text("Required to save your progress")
-                .font(Theme.Typography.onboardingHero)
-                .foregroundStyle(Theme.Palette.ink)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-
             mascotIntro
                 .padding(.top, Theme.Spacing.sm)
         }
