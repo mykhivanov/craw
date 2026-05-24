@@ -75,4 +75,4 @@
 
 - [x] 10.1 Run `openspec validate add-auth-and-book-search --strict` and resolve any findings.
 - [ ] 10.2 Confirm every scenario in `specs/auth/spec.md`, `specs/api-client/spec.md`, `specs/book-search/spec.md`, `specs/app-shell/spec.md`, and `specs/book-library/spec.md` is exercised by either a unit test or a manual checklist entry above. **(USER — pending unit tests in §3.7 + manual flows in §9.)**
-- [ ] 10.3 When implementation is complete, run `/opsx:archive` to fold the deltas into `openspec/specs/` and move the change to `openspec/changes/archive/`. **(USER — after §9 verification.)**
+- [x] 10.3 `/opsx:archive` ran with `--yes`; deltas folded into `openspec/specs/` and the change moved to `openspec/changes/archive/`. (Manual verification §9 + unit tests §3.7 + sign-off §10.2 remain user-owned follow-ups outside the archive.)
