@@ -4,35 +4,81 @@ struct WelcomeStep: View {
     let onContinue: () -> Void
 
     private let quoteSections: [String] = [
-        "I built this because I struggled with reading too.\nMotivation does not work. Discipline does.",
+        "I built this because I struggled with reading too.",
+        "Motivation does not work. Discipline does.",
         "I knew books could make me sharper, more focused, and more intentional — but I often lost momentum, got distracted, or read without really absorbing much.",
         "Whether you're building the habit or already read often, this app is here to\nA) help you read consistently\nB) get more from every book."
     ]
 
     var body: some View {
         OnboardingStepScaffold(
-            eyebrow: "Welcome to Craw",
+            eyebrow: "",
             title: "",
             subtitle: "",
             onContinue: onContinue
         ) {
             VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
-                mascotIntro
+                introBanner
                 quoteCard
             }
         }
     }
 
-    private var mascotIntro: some View {
-        VStack(spacing: Theme.Spacing.base) {
+    private var introBanner: some View {
+        HStack(alignment: .center, spacing: Theme.Spacing.base) {
             Image("mascotCraw")
                 .resizable()
                 .scaledToFit()
-                .frame(height: 200)
+                .frame(width: 72, height: 72)
+                .padding(Theme.Spacing.sm)
+                .background(
+                    Circle()
+                        .fill(Theme.Palette.canvas)
+                        .shadow(color: Theme.Palette.rausch.opacity(0.16), radius: 18, y: 8)
+                )
 
-            MascotSpeechBubble(text: "My name is Craw, nice to meet you!")
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                Text("Welcome to Craw".uppercased())
+                    .font(Theme.Typography.microLabel)
+                    .foregroundStyle(Theme.Palette.rausch)
+                    .tracking(0.8)
+
+                Text("Your reading companion")
+                    .font(Theme.Typography.displaySm)
+                    .foregroundStyle(Theme.Palette.ink)
+            }
+
+            Spacer(minLength: Theme.Spacing.sm)
         }
-        .frame(maxWidth: .infinity)
+        .padding(Theme.Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(introBannerBackground)
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.card)
+                .stroke(Theme.Palette.hairlineSoft, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card))
+        .crawCardShadow()
+    }
+
+    private var introBannerBackground: some View {
+        ZStack(alignment: .topTrailing) {
+            Theme.Palette.surfaceCard
+
+            Circle()
+                .fill(Theme.Palette.rauschTint)
+                .frame(width: 120, height: 120)
+                .offset(x: 34, y: -52)
+
+            LinearGradient(
+                colors: [
+                    Theme.Palette.rauschTint.opacity(0.55),
+                    Theme.Palette.canvas
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
     }
 
     private var quoteCard: some View {
@@ -82,12 +128,18 @@ struct WelcomeStep: View {
     private var quoteBody: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.base) {
             Text(quoteSections[0])
+                .font(Theme.Typography.bodyMd)
+                .foregroundStyle(Theme.Palette.body)
+                .lineSpacing(3)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text(quoteSections[1])
                 .font(Theme.Typography.bodyLg)
                 .foregroundStyle(Theme.Palette.ink)
                 .lineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
 
-            ForEach(quoteSections.dropFirst(), id: \.self) { section in
+            ForEach(quoteSections.dropFirst(2), id: \.self) { section in
                 Text(section)
                     .font(Theme.Typography.bodyMd)
                     .foregroundStyle(Theme.Palette.body)

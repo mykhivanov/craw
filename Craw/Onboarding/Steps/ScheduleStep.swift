@@ -96,43 +96,54 @@ struct ScheduleStep: View {
     }
 
     private var actionsRow: some View {
-        HStack(spacing: Theme.Spacing.sm) {
+        VStack(spacing: Theme.Spacing.sm) {
             reminderToggleCompact
             reminderTimeCompact
         }
     }
 
     private var reminderToggleCompact: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            HStack(spacing: Theme.Spacing.xs) {
-                Image(systemName: "bell.badge.fill")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Theme.Palette.rausch)
-                Text("Reminders")
-                    .font(Theme.Typography.titleMd)
-                    .foregroundStyle(Theme.Palette.ink)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.85)
+        Button {
+            Task { @MainActor in
+                await handleReminderToggle(newValue: !state.wantsReminders)
             }
+        } label: {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                HStack(spacing: Theme.Spacing.xs) {
+                    Image(systemName: "bell.badge.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Theme.Palette.rausch)
+                    Text("Reminders")
+                        .font(Theme.Typography.titleMd)
+                        .foregroundStyle(Theme.Palette.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                }
 
-            HStack {
-                Spacer()
-                Toggle("", isOn: reminderToggleBinding)
-                    .labelsHidden()
-                    .tint(Theme.Palette.rausch)
+                HStack {
+                    Spacer()
+                    Toggle("", isOn: reminderToggleBinding)
+                        .labelsHidden()
+                        .tint(Theme.Palette.rausch)
+                        .allowsHitTesting(false)
+                }
             }
+            .padding(.horizontal, Theme.Spacing.base)
+            .padding(.vertical, Theme.Spacing.sm)
+            .frame(maxWidth: .infinity, minHeight: 92)
+            .contentShape(Rectangle())
+            .background(Theme.Palette.surfaceCard)
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.Radius.card)
+                    .stroke(Theme.Palette.hairlineSoft, lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card))
         }
-        .padding(.horizontal, Theme.Spacing.base)
-        .padding(.vertical, Theme.Spacing.sm)
-        .frame(maxWidth: .infinity, minHeight: 92)
-        .background(Theme.Palette.surfaceCard)
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Radius.card)
-                .stroke(Theme.Palette.hairlineSoft, lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card))
-        .accessibilityElement(children: .contain)
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
         .accessibilityLabel("Reminders")
+        .accessibilityValue(state.wantsReminders ? "On" : "Off")
+        .accessibilityAddTraits(.isButton)
     }
 
     private var reminderTimeCompact: some View {
@@ -166,6 +177,7 @@ struct ScheduleStep: View {
             .padding(.horizontal, Theme.Spacing.base)
             .padding(.vertical, Theme.Spacing.sm)
             .frame(maxWidth: .infinity, minHeight: 92)
+            .contentShape(Rectangle())
             .background(Theme.Palette.surfaceCard)
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.Radius.card)
