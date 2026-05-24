@@ -8,7 +8,7 @@ struct YearlyGoalStep: View {
         OnboardingStepScaffold(
             eyebrow: "Annual target",
             title: "Finish stronger this year.",
-            subtitle: "Choose a yearly target. Craw will turn it into a pace that feels actionable week by week.",
+            subtitle: "",
             buttonTitle: "Finish setup",
             isButtonEnabled: state.yearlyGoal != nil,
             onContinue: onContinue

@@ -3,8 +3,6 @@ import SwiftUI
 struct WelcomeStep: View {
     let onContinue: () -> Void
 
-    private let valueChips: [String] = ["Consistency", "Focus", "Retention"]
-
     private let quoteSections: [String] = [
         "I built this because I struggled with reading too.\nMotivation does not work. Discipline does.",
         "I knew books could make me sharper, more focused, and more intentional — but I often lost momentum, got distracted, or read without really absorbing much.",
@@ -26,7 +24,6 @@ struct WelcomeStep: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
             quoteHeader
             quoteBody
-            valueChipRow
 
             Divider()
                 .background(Theme.Palette.hairlineSoft)
@@ -81,20 +78,6 @@ struct WelcomeStep: View {
                     .foregroundStyle(Theme.Palette.body)
                     .lineSpacing(3)
                     .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
-
-    private var valueChipRow: some View {
-        HStack(spacing: Theme.Spacing.sm) {
-            ForEach(valueChips, id: \.self) { chip in
-                Text(chip)
-                    .font(Theme.Typography.buttonSm)
-                    .foregroundStyle(Theme.Palette.ink)
-                    .padding(.horizontal, Theme.Spacing.md)
-                    .padding(.vertical, Theme.Spacing.sm)
-                    .background(Theme.Palette.surfaceSoft)
-                    .clipShape(Capsule())
             }
         }
     }
