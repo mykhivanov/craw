@@ -20,5 +20,8 @@
 
     <key>CRAW_API_BASE_URL</key>
     <string>https://66cd-2a02-a311-80d1-1c80-b95f-cfcf-cc74-dec2.ngrok-free.app/api/v1</string>
+
+    <key>NSSupportsLiveActivities</key>
+    <true/>
 </dict>
 </plist>

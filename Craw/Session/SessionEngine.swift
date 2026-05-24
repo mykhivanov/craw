@@ -12,6 +12,8 @@ enum SessionState: String, Equatable {
 @Observable
 @MainActor
 final class SessionEngine {
+    static let shared = SessionEngine()
+
     private(set) var state: SessionState = .idle
     private(set) var book: Book?
     private(set) var startedAt: Date = .now
@@ -57,6 +59,7 @@ final class SessionEngine {
         state = .running
         scheduleAutosave()
         persistSnapshot()
+        LiveActivityController.shared.start(engine: self)
     }
 
     func pause(now: Date = .now) {
@@ -68,6 +71,7 @@ final class SessionEngine {
         state = .paused
         cancelAutosave()
         persistSnapshot()
+        LiveActivityController.shared.update(engine: self)
     }
 
     func resume(now: Date = .now) {
@@ -76,6 +80,7 @@ final class SessionEngine {
         state = .running
         scheduleAutosave()
         persistSnapshot()
+        LiveActivityController.shared.update(engine: self)
     }
 
     func stop(now: Date = .now) {
@@ -88,6 +93,7 @@ final class SessionEngine {
         cancelAutosave()
         state = .stopped
         persistSnapshot()
+        LiveActivityController.shared.end()
     }
 
     func setCurrentPage(_ page: Int) {
@@ -95,6 +101,7 @@ final class SessionEngine {
         let upperBound = book?.totalPages ?? Int.max
         currentPage = max(startingPage, min(page, upperBound))
         persistSnapshot()
+        LiveActivityController.shared.update(engine: self)
     }
 
     func beginSaving() {
@@ -113,6 +120,7 @@ final class SessionEngine {
         lastResumeAt = nil
         startingPage = 0
         currentPage = 0
+        LiveActivityController.shared.end()
     }
 
     // MARK: - Restoration
@@ -133,6 +141,7 @@ final class SessionEngine {
             state = .running
             scheduleAutosave()
         }
+        LiveActivityController.shared.start(engine: self)
     }
 
     // MARK: - Cache plumbing
@@ -151,7 +160,7 @@ final class SessionEngine {
         cache.save(snapshot)
     }
 
-    private func liveAccumulated(now: Date = .now) -> Int {
+    func liveAccumulated(now: Date = .now) -> Int {
         if state == .running, let resume = lastResumeAt {
             return accumulatedElapsedSeconds + Int(now.timeIntervalSince(resume))
         }

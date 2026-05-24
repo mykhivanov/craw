@@ -21,7 +21,7 @@ final class ActiveSessionCache: ActiveSessionCaching {
 
     private let defaults: UserDefaults
 
-    init(defaults: UserDefaults = .standard) {
+    nonisolated init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
     }
 

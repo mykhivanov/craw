@@ -6,12 +6,13 @@ import SwiftUI
 struct CrawApp: App {
     let container: ModelContainer
 
-    @State private var sessionEngine = SessionEngine()
+    @State private var sessionEngine: SessionEngine = .shared
 
     init() {
         Self.configureURLCache()
         Self.configureClerk()
         container = CrawModelContainer.live()
+        LiveActivityActionObserver.shared.start()
         #if DEBUG
             if SampleData.isLaunchArgumentEnabled {
                 SampleData.seedIfEmpty(into: ModelContext(container))
