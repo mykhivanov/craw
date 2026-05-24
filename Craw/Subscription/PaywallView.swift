@@ -75,7 +75,7 @@ struct PaywallView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-            Text("Craw Pro")
+            Text("Craw Membership")
                 .font(Theme.Typography.onboardingHero)
                 .foregroundStyle(Theme.Palette.ink)
             Text("Unlock the full reading experience.")
