@@ -56,10 +56,12 @@ struct OnboardingStepScaffold<Content: View>: View {
                 .foregroundStyle(Theme.Palette.rausch)
                 .tracking(0.6)
 
-            Text(title)
-                .font(Theme.Typography.onboardingHero)
-                .foregroundStyle(Theme.Palette.ink)
-                .fixedSize(horizontal: false, vertical: true)
+            if !title.isEmpty {
+                Text(title)
+                    .font(Theme.Typography.onboardingHero)
+                    .foregroundStyle(Theme.Palette.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
             if !subtitle.isEmpty {
                 Text(subtitle)

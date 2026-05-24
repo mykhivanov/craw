@@ -9,7 +9,7 @@ final class CrawAppDelegate: NSObject, UIApplicationDelegate {
 
     func application(
         _: UIApplication,
-        didFinishLaunchingWithOptions _: [UIApplication.LaunchesOptionsKey: Any]? = nil
+        didFinishLaunchingWithOptions _: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
         // FirebaseApp.configure() is invoked from CrawApp.init() before this delegate runs.
         UNUserNotificationCenter.current().delegate = self

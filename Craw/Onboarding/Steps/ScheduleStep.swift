@@ -28,14 +28,16 @@ struct ScheduleStep: View {
     var body: some View {
         OnboardingStepScaffold(
             eyebrow: "Reading schedule",
-            title: "Choose your reading days.",
-            subtitle: "Tap the days you want to read. Then set one reminder time.",
+            title: "",
+            subtitle: "",
             onContinue: onContinue
         ) {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                actionsRow
+                if showDeniedNote {
+                    deniedNote
+                }
                 daysCard
-                reminderCard
-                reminderToggleCard
             }
         }
         .onAppear {
@@ -67,51 +69,30 @@ struct ScheduleStep: View {
         )
     }
 
-    private var reminderToggleCard: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            HStack(alignment: .top, spacing: Theme.Spacing.base) {
-                Image(systemName: "bell.badge.fill")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(Theme.Palette.rausch)
-                    .frame(width: 44, height: 44)
-                    .background(Theme.Palette.rauschTint)
-                    .clipShape(Circle())
-
-                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                    Text("Turn on reminders")
-                        .font(Theme.Typography.titleMd)
-                        .foregroundStyle(Theme.Palette.ink)
-                    Text("We'll send a gentle nudge at this time so a missed day doesn't become a missed week.")
-                        .font(Theme.Typography.bodySm)
-                        .foregroundStyle(Theme.Palette.muted)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
-                Spacer(minLength: Theme.Spacing.sm)
-
-                Toggle("", isOn: reminderToggleBinding)
-                    .labelsHidden()
-                    .tint(Theme.Palette.rausch)
-            }
-
-            if showDeniedNote {
-                HStack(spacing: Theme.Spacing.sm) {
-                    Text("Notifications are off. Enable them in Settings.")
-                        .font(Theme.Typography.bodySm)
-                        .foregroundStyle(Theme.Palette.muted)
-                    Spacer(minLength: Theme.Spacing.sm)
-                    Button("Open Settings") {
-                        if let url = URL(string: UIApplication.openSettingsURLString) {
-                            UIApplication.shared.open(url)
-                        }
-                    }
-                    .font(Theme.Typography.buttonSm)
-                    .foregroundStyle(Theme.Palette.rausch)
-                }
-                .padding(.top, Theme.Spacing.xs)
-            }
+    private var actionsRow: some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            reminderToggleCompact
+            reminderTimeCompact
         }
-        .padding(Theme.Spacing.base)
+    }
+
+    private var reminderToggleCompact: some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            Image(systemName: "bell.badge.fill")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Theme.Palette.rausch)
+            Text("Reminders")
+                .font(Theme.Typography.titleMd)
+                .foregroundStyle(Theme.Palette.ink)
+                .lineLimit(1)
+            Spacer(minLength: Theme.Spacing.xs)
+            Toggle("", isOn: reminderToggleBinding)
+                .labelsHidden()
+                .tint(Theme.Palette.rausch)
+        }
+        .padding(.horizontal, Theme.Spacing.base)
+        .padding(.vertical, Theme.Spacing.sm)
+        .frame(maxWidth: .infinity, minHeight: 58)
         .background(Theme.Palette.surfaceCard)
         .overlay(
             RoundedRectangle(cornerRadius: Theme.Radius.card)
@@ -119,6 +100,65 @@ struct ScheduleStep: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card))
         .accessibilityElement(children: .contain)
+        .accessibilityLabel("Reminders")
+    }
+
+    private var reminderTimeCompact: some View {
+        Button {
+            pickerDate = ScheduleStep.dateFromComponents(state.reminderTime)
+            isPickerPresented = true
+        } label: {
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: "clock.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Theme.Palette.rausch)
+                Text(Self.formatReminderTime(state.reminderTime))
+                    .font(Theme.Typography.titleMd)
+                    .foregroundStyle(Theme.Palette.ink)
+                    .lineLimit(1)
+                Spacer(minLength: Theme.Spacing.xs)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(Theme.Palette.muted)
+            }
+            .padding(.horizontal, Theme.Spacing.base)
+            .padding(.vertical, Theme.Spacing.sm)
+            .frame(maxWidth: .infinity, minHeight: 58)
+            .background(Theme.Palette.surfaceCard)
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.Radius.card)
+                    .stroke(Theme.Palette.hairlineSoft, lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Reminder time")
+        .accessibilityValue(Self.formatReminderTime(state.reminderTime))
+        .accessibilityHint("Opens the time picker")
+    }
+
+    private var deniedNote: some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            Text("Notifications are off. Enable them in Settings.")
+                .font(Theme.Typography.bodySm)
+                .foregroundStyle(Theme.Palette.muted)
+            Spacer(minLength: Theme.Spacing.sm)
+            Button("Open Settings") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            .font(Theme.Typography.buttonSm)
+            .foregroundStyle(Theme.Palette.rausch)
+        }
+        .padding(.horizontal, Theme.Spacing.base)
+        .padding(.vertical, Theme.Spacing.sm)
+        .background(Theme.Palette.surfaceCard)
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.card)
+                .stroke(Theme.Palette.hairlineSoft, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card))
     }
 
     private func handleReminderToggle(newValue: Bool) async {
@@ -186,41 +226,6 @@ struct ScheduleStep: View {
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card))
     }
 
-    private var reminderCard: some View {
-        Button {
-            pickerDate = ScheduleStep.dateFromComponents(state.reminderTime)
-            isPickerPresented = true
-        } label: {
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: Theme.Spacing.base) {
-                    reminderIcon
-                    reminderText
-                    Spacer(minLength: Theme.Spacing.sm)
-                    reminderTimePill
-                }
-
-                VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-                    HStack(alignment: .top, spacing: Theme.Spacing.base) {
-                        reminderIcon
-                        reminderText
-                    }
-                    reminderTimePill
-                }
-            }
-            .padding(Theme.Spacing.base)
-            .background(Theme.Palette.surfaceCard)
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.Radius.card)
-                    .stroke(Theme.Palette.hairlineSoft, lineWidth: 1)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Reminder time")
-        .accessibilityValue(Self.formatReminderTime(state.reminderTime))
-        .accessibilityHint("Opens the time picker")
-    }
-
     private var quickPresetRow: some View {
         ViewThatFits(in: .horizontal) {
             HStack(spacing: Theme.Spacing.sm) {
@@ -237,41 +242,6 @@ struct ScheduleStep: View {
         }
     }
 
-    private var reminderIcon: some View {
-        Image(systemName: "bell.fill")
-            .font(.system(size: 17, weight: .semibold))
-            .foregroundStyle(Theme.Palette.rausch)
-            .frame(width: 44, height: 44)
-            .background(Theme.Palette.rauschTint)
-            .clipShape(Circle())
-    }
-
-    private var reminderText: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-            Text("Reminder time")
-                .font(Theme.Typography.titleMd)
-                .foregroundStyle(Theme.Palette.ink)
-            Text("We'll nudge you on selected days.")
-                .font(Theme.Typography.bodySm)
-                .foregroundStyle(Theme.Palette.muted)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    private var reminderTimePill: some View {
-        HStack(spacing: Theme.Spacing.xs) {
-            Text(Self.formatReminderTime(state.reminderTime))
-                .font(Theme.Typography.buttonMd)
-            Image(systemName: "chevron.up.chevron.down")
-                .font(.system(size: 11, weight: .bold))
-        }
-        .foregroundStyle(Theme.Palette.ink)
-        .padding(.horizontal, Theme.Spacing.md)
-        .padding(.vertical, Theme.Spacing.sm)
-        .background(Theme.Palette.surfaceSoft)
-        .clipShape(Capsule())
-    }
-
     private func weekdayChip(_ day: Weekday) -> some View {
         let selected = state.readingWeekdays.contains(day)
         return Button {
@@ -282,13 +252,8 @@ struct ScheduleStep: View {
             }
         } label: {
             HStack(spacing: Theme.Spacing.sm) {
-                VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
-                    Text(Self.shortName(for: day))
-                        .font(Theme.Typography.titleMd)
-                    Text(day.label)
-                        .font(Theme.Typography.captionSm)
-                        .opacity(0.72)
-                }
+                Text(day.label)
+                    .font(Theme.Typography.titleMd)
 
                 Spacer()
 
@@ -389,18 +354,6 @@ struct ScheduleStep: View {
         comps.hour = components.hour ?? 8
         comps.minute = components.minute ?? 0
         return Calendar.current.date(from: comps) ?? now
-    }
-
-    private static func shortName(for day: Weekday) -> String {
-        switch day {
-        case .monday: "Mon"
-        case .tuesday: "Tue"
-        case .wednesday: "Wed"
-        case .thursday: "Thu"
-        case .friday: "Fri"
-        case .saturday: "Sat"
-        case .sunday: "Sun"
-        }
     }
 
     private static func formatReminderTime(_ components: DateComponents) -> String {
