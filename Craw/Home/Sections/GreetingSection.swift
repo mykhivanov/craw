@@ -2,18 +2,13 @@ import SwiftUI
 
 struct GreetingSection: View {
     let now: Date
-    let counterProvider: LiveCounterProvider
 
-    init(now: Date = .now, counterProvider: LiveCounterProvider = DeterministicLiveCounter()) {
+    init(now: Date = .now) {
         self.now = now
-        self.counterProvider = counterProvider
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-            GreetingHeader(now: now)
-            LiveCounterLabel(provider: counterProvider)
-        }
+        GreetingHeader(now: now)
     }
 }
 

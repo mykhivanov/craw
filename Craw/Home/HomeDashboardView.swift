@@ -13,13 +13,17 @@ struct HomeDashboardView: View {
 
     @State private var isSearchPresented = false
 
+    private var isLibraryEmpty: Bool {
+        inProgressBooks.isEmpty && finishedBooks.isEmpty
+    }
+
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: Theme.Spacing.lg) {
                 GreetingSection()
                 WeekStripSection(days: readingDays)
                 StatCardsSection(days: readingDays)
-                bookSections
+                tileColumn
             }
             .padding(.horizontal, Theme.Spacing.base)
             .padding(.top, Theme.Spacing.base)
@@ -35,25 +39,15 @@ struct HomeDashboardView: View {
         }
     }
 
-    @ViewBuilder
-    private var bookSections: some View {
-        if inProgressBooks.isEmpty, finishedBooks.isEmpty {
-            LibraryEmptyState(onAddTapped: presentSearch)
-        } else {
-            BookListSection(
-                title: "Reading Now",
-                books: inProgressBooks,
-                showsAddButton: true,
-                onAddTapped: presentSearch,
-                emptyContent: { AnyView(ReadingNowEmptyState(onAddTapped: presentSearch)) }
-            )
-            if !finishedBooks.isEmpty {
-                BookListSection(
-                    title: "Finished",
-                    books: finishedBooks,
-                    showsAddButton: false
-                )
+    private var tileColumn: some View {
+        VStack(spacing: Theme.Spacing.md) {
+            if isLibraryEmpty {
+                MascotEmptyTile(onAddTapped: presentSearch)
             }
+            EntertainmentBookTile(onAddTapped: presentSearch)
+            StudyBookTile(onAddTapped: presentSearch)
+            LiveCounterTile()
+            QuoteOfTheDayTile()
         }
     }
 
@@ -81,21 +75,8 @@ struct HomeDashboardView: View {
         title: "Done & Dusted",
         author: "An Author",
         totalPages: 200,
-        currentPage: 200
-    ))
-    try? ctx.save()
-    return NavigationStack { HomeDashboardView() }
-        .modelContainer(container)
-}
-
-#Preview("In-progress only") {
-    let container = CrawModelContainer.previewInMemory()
-    let ctx = ModelContext(container)
-    ctx.insert(Book(
-        title: "Currently Reading",
-        author: "An Author",
-        totalPages: 400,
-        currentPage: 120
+        currentPage: 200,
+        attitude: .entertainment
     ))
     try? ctx.save()
     return NavigationStack { HomeDashboardView() }

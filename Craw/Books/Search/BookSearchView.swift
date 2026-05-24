@@ -7,6 +7,7 @@ struct BookSearchView: View {
 
     @State private var store: BookSearchStore = AppEnvironment.makeBookSearchStore()
     @State private var queryText: String = ""
+    @State private var pendingAttitudeChoice: BookSearchResult?
 
     var body: some View {
         NavigationStack {
@@ -28,6 +29,16 @@ struct BookSearchView: View {
         )
         .onChange(of: queryText) { _, newValue in
             store.updateQuery(newValue)
+        }
+        .sheet(item: $pendingAttitudeChoice) { result in
+            BookAttitudePicker(
+                result: result,
+                onConfirm: { attitude in
+                    insert(result, attitude: attitude)
+                    pendingAttitudeChoice = nil
+                },
+                onCancel: { pendingAttitudeChoice = nil }
+            )
         }
     }
 
@@ -91,7 +102,7 @@ struct BookSearchView: View {
             LazyVStack(spacing: Theme.Spacing.sm) {
                 ForEach(Array(results.enumerated()), id: \.element.id) { index, result in
                     Button {
-                        insert(result)
+                        pendingAttitudeChoice = result
                     } label: {
                         BookSearchResultRow(result: result)
                     }
@@ -113,14 +124,15 @@ struct BookSearchView: View {
         }
     }
 
-    private func insert(_ result: BookSearchResult) {
+    private func insert(_ result: BookSearchResult, attitude: BookAttitude) {
         let book = Book(
             remoteID: result.id,
             title: result.title,
             author: result.author,
             coverImageURL: result.coverImageURL,
             isbn: result.isbn,
-            totalPages: result.totalPages
+            totalPages: result.totalPages,
+            attitude: attitude
         )
         modelContext.insert(book)
         try? modelContext.save()

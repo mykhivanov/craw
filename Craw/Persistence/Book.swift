@@ -13,6 +13,14 @@ final class Book {
     var totalPages: Int
     var currentPage: Int
     var dateAdded: Date
+    /// Stored as String because #Predicate can't traverse enum cases as key paths.
+    /// Lightweight migration uses the declaration-site default for old rows.
+    var attitudeRaw: String = BookAttitude.entertainment.rawValue
+
+    var attitude: BookAttitude {
+        get { BookAttitude(rawValue: attitudeRaw) ?? .entertainment }
+        set { attitudeRaw = newValue.rawValue }
+    }
 
     init(
         id: UUID = UUID(),
@@ -24,7 +32,8 @@ final class Book {
         isbn: String? = nil,
         totalPages: Int,
         currentPage: Int = 0,
-        dateAdded: Date = .now
+        dateAdded: Date = .now,
+        attitude: BookAttitude
     ) {
         self.id = id
         self.remoteID = remoteID
@@ -36,7 +45,13 @@ final class Book {
         self.totalPages = totalPages
         self.currentPage = currentPage
         self.dateAdded = dateAdded
+        attitudeRaw = attitude.rawValue
     }
+}
+
+enum BookAttitude: String, Codable, CaseIterable {
+    case entertainment
+    case study
 }
 
 enum BookStatus {

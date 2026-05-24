@@ -22,21 +22,24 @@
                 author: "J.R.R. Tolkien",
                 coverAssetName: nil,
                 totalPages: 1200,
-                currentPage: 540
+                currentPage: 540,
+                attitude: .entertainment
             )
             let inProgressWithCover = Book(
                 title: "Project Hail Mary",
                 author: "Andy Weir",
                 coverAssetName: "book_cover_sample_a",
                 totalPages: 480,
-                currentPage: 60
+                currentPage: 60,
+                attitude: .study
             )
             let finished = Book(
                 title: "The Pragmatic Programmer",
                 author: "Hunt & Thomas",
                 coverAssetName: nil,
                 totalPages: 320,
-                currentPage: 320
+                currentPage: 320,
+                attitude: .study
             )
             for book in [inProgressNoCover, inProgressWithCover, finished] {
                 context.insert(book)
