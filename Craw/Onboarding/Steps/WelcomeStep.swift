@@ -12,12 +12,27 @@ struct WelcomeStep: View {
     var body: some View {
         OnboardingStepScaffold(
             eyebrow: "Welcome to Craw",
-            title: "Build a reading life that lasts.",
-            subtitle: "A note from the creator before we shape your plan.",
+            title: "",
+            subtitle: "",
             onContinue: onContinue
         ) {
-            quoteCard
+            VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
+                mascotIntro
+                quoteCard
+            }
         }
+    }
+
+    private var mascotIntro: some View {
+        VStack(spacing: Theme.Spacing.base) {
+            Image("mascotCraw")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 200)
+
+            MascotSpeechBubble(text: "My name is Craw, nice to meet you!")
+        }
+        .frame(maxWidth: .infinity)
     }
 
     private var quoteCard: some View {

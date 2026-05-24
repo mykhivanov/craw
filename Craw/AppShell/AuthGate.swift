@@ -51,7 +51,7 @@ struct AuthGate: View {
             SplashView()
         } else if clerk.user == nil {
             if onboardingState.isCompleted || OnboardingState.shouldSkipFromLaunchArgs {
-                AuthView(mode: .signInOrUp, isDismissable: false)
+                CrawAuthView()
             } else {
                 OnboardingView()
                     .environment(onboardingState)

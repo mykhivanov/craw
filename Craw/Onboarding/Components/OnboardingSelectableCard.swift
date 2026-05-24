@@ -30,9 +30,13 @@ struct OnboardingSelectableCard: View {
         )
     }
 
+    private var hStackAlignment: VerticalAlignment {
+        subtitle == nil ? .center : .top
+    }
+
     var body: some View {
         Button(action: action) {
-            HStack(alignment: .top, spacing: Theme.Spacing.md) {
+            HStack(alignment: hStackAlignment, spacing: Theme.Spacing.md) {
                 iconView
 
                 VStack(alignment: .leading, spacing: Theme.Spacing.xs) {

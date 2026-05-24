@@ -11,6 +11,7 @@ struct ScheduleStep: View {
     @State private var isPickerPresented: Bool = false
     @State private var pickerDate: Date = ScheduleStep.defaultDate()
     @State private var showDeniedNote: Bool = false
+    @State private var showRemindersPrompt: Bool = false
 
     private static let orderedDays: [Weekday] = [
         .monday, .tuesday, .wednesday, .thursday, .friday, .saturday, .sunday
@@ -30,7 +31,7 @@ struct ScheduleStep: View {
             eyebrow: "Reading schedule",
             title: "",
             subtitle: "",
-            onContinue: onContinue
+            onContinue: handleContinueTapped
         ) {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                 actionsRow
@@ -58,6 +59,31 @@ struct ScheduleStep: View {
             pickerSheet
                 .presentationDetents([.height(360), .medium])
         }
+        .confirmationDialog(
+            "Enable reading reminders?",
+            isPresented: $showRemindersPrompt,
+            titleVisibility: .visible
+        ) {
+            Button("Enable reminders") {
+                Task { @MainActor in
+                    await handleReminderToggle(newValue: true)
+                    onContinue()
+                }
+            }
+            Button("Not now", role: .cancel) {
+                onContinue()
+            }
+        } message: {
+            Text("Craw can nudge you on your reading days. You can change this anytime in Settings.")
+        }
+    }
+
+    private func handleContinueTapped() {
+        if !state.wantsReminders, state.reminderAuthorizationStatus == .notDetermined {
+            showRemindersPrompt = true
+        } else {
+            onContinue()
+        }
     }
 
     private var reminderToggleBinding: Binding<Bool> {
@@ -77,22 +103,28 @@ struct ScheduleStep: View {
     }
 
     private var reminderToggleCompact: some View {
-        HStack(spacing: Theme.Spacing.sm) {
-            Image(systemName: "bell.badge.fill")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(Theme.Palette.rausch)
-            Text("Reminders")
-                .font(Theme.Typography.titleMd)
-                .foregroundStyle(Theme.Palette.ink)
-                .lineLimit(1)
-            Spacer(minLength: Theme.Spacing.xs)
-            Toggle("", isOn: reminderToggleBinding)
-                .labelsHidden()
-                .tint(Theme.Palette.rausch)
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            HStack(spacing: Theme.Spacing.xs) {
+                Image(systemName: "bell.badge.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Theme.Palette.rausch)
+                Text("Reminders")
+                    .font(Theme.Typography.titleMd)
+                    .foregroundStyle(Theme.Palette.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+            }
+
+            HStack {
+                Spacer()
+                Toggle("", isOn: reminderToggleBinding)
+                    .labelsHidden()
+                    .tint(Theme.Palette.rausch)
+            }
         }
         .padding(.horizontal, Theme.Spacing.base)
         .padding(.vertical, Theme.Spacing.sm)
-        .frame(maxWidth: .infinity, minHeight: 58)
+        .frame(maxWidth: .infinity, minHeight: 92)
         .background(Theme.Palette.surfaceCard)
         .overlay(
             RoundedRectangle(cornerRadius: Theme.Radius.card)
@@ -108,22 +140,32 @@ struct ScheduleStep: View {
             pickerDate = ScheduleStep.dateFromComponents(state.reminderTime)
             isPickerPresented = true
         } label: {
-            HStack(spacing: Theme.Spacing.sm) {
-                Image(systemName: "clock.fill")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Theme.Palette.rausch)
-                Text(Self.formatReminderTime(state.reminderTime))
-                    .font(Theme.Typography.titleMd)
-                    .foregroundStyle(Theme.Palette.ink)
-                    .lineLimit(1)
-                Spacer(minLength: Theme.Spacing.xs)
-                Image(systemName: "chevron.up.chevron.down")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(Theme.Palette.muted)
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                HStack(spacing: Theme.Spacing.xs) {
+                    Image(systemName: "clock.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Theme.Palette.rausch)
+                    Text("Reminder time")
+                        .font(Theme.Typography.titleMd)
+                        .foregroundStyle(Theme.Palette.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                }
+
+                HStack(spacing: Theme.Spacing.xs) {
+                    Text(Self.formatReminderTime(state.reminderTime))
+                        .font(Theme.Typography.titleMd)
+                        .foregroundStyle(Theme.Palette.ink)
+                        .lineLimit(1)
+                    Spacer(minLength: Theme.Spacing.xs)
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(Theme.Palette.muted)
+                }
             }
             .padding(.horizontal, Theme.Spacing.base)
             .padding(.vertical, Theme.Spacing.sm)
-            .frame(maxWidth: .infinity, minHeight: 58)
+            .frame(maxWidth: .infinity, minHeight: 92)
             .background(Theme.Palette.surfaceCard)
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.Radius.card)
@@ -254,6 +296,8 @@ struct ScheduleStep: View {
             HStack(spacing: Theme.Spacing.sm) {
                 Text(day.label)
                     .font(Theme.Typography.titleSm)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
 
                 Spacer()
 

@@ -57,7 +57,10 @@ struct HowToReadStep: View {
                     .lineSpacing(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
+
+            Spacer(minLength: 0)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Theme.Spacing.base)
         .background(Theme.Palette.surfaceCard)
         .overlay(
