@@ -253,7 +253,7 @@ struct ScheduleStep: View {
         } label: {
             HStack(spacing: Theme.Spacing.sm) {
                 Text(day.label)
-                    .font(Theme.Typography.titleMd)
+                    .font(Theme.Typography.titleSm)
 
                 Spacer()
 

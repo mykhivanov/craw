@@ -16,7 +16,6 @@ struct GoalStep: View {
                     OnboardingSelectableCard(
                         icon: goal.icon,
                         title: goal.label,
-                        subtitle: goal.subtitle,
                         isSelected: state.selectedGoals.contains(goal)
                     ) {
                         toggle(goal)

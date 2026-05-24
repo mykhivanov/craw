@@ -25,17 +25,6 @@ enum OnboardingGoal: String, CaseIterable, Identifiable {
         }
     }
 
-    var subtitle: String {
-        switch self {
-        case .nextLevelPartner: "Grow into the partner you want to attract — sharper, grounded, and in your own league."
-        case .habit: "Turn a small daily minimum into an automatic routine."
-        case .smarter: "Capture ideas, quotes, and takeaways you can use later."
-        case .consistent: "Keep momentum even when your week gets busy."
-        case .track: "See pages, streaks, sessions, and progress compound."
-        case .replaceDoomScrolling: "Use downtime for something that leaves you better."
-        }
-    }
-
     var icon: String {
         switch self {
         case .nextLevelPartner: "heart.circle.fill"

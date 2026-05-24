@@ -56,11 +56,6 @@ struct WelcomeStep: View {
                     .padding(.vertical, Theme.Spacing.sm)
                     .background(Theme.Palette.rauschTint)
                     .clipShape(Capsule())
-
-                Text("For readers who want discipline without the guilt.")
-                    .font(Theme.Typography.displayLg)
-                    .foregroundStyle(Theme.Palette.ink)
-                    .fixedSize(horizontal: false, vertical: true)
             }
 
             Spacer(minLength: Theme.Spacing.base)
