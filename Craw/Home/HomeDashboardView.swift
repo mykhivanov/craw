@@ -44,9 +44,9 @@ struct HomeDashboardView: View {
             if isLibraryEmpty {
                 MascotEmptyTile(onAddTapped: presentSearch)
             }
+            LiveCounterTile()
             EntertainmentBookTile(onAddTapped: presentSearch)
             StudyBookTile(onAddTapped: presentSearch)
-            LiveCounterTile()
             QuoteOfTheDayTile()
         }
     }
