@@ -4,6 +4,9 @@ import SwiftUI
 struct HomeDashboardView: View {
     @Environment(SessionEngine.self) private var engine
 
+    let onStartSession: ((Book) -> Void)?
+    let onShowAllCurrentlyReading: () -> Void
+
     @Query(filter: BookLibraryReader.inProgressPredicate, sort: BookLibraryReader.defaultSort)
     private var inProgressBooks: [Book]
 
@@ -14,7 +17,14 @@ struct HomeDashboardView: View {
     private var readingDays: [ReadingDay]
 
     @State private var searchSheet: SearchSheet?
-    @State private var pushAllCurrentlyReading = false
+
+    init(
+        onStartSession: ((Book) -> Void)? = nil,
+        onShowAllCurrentlyReading: @escaping () -> Void = {}
+    ) {
+        self.onStartSession = onStartSession
+        self.onShowAllCurrentlyReading = onShowAllCurrentlyReading
+    }
 
     private enum SearchSheet: Identifiable {
         case entertainment, study, anyAttitude
@@ -31,10 +41,19 @@ struct HomeDashboardView: View {
         inProgressBooks.isEmpty && finishedBooks.isEmpty
     }
 
+    private var entertainmentBook: Book? {
+        inProgressBooks.first { $0.attitude == .entertainment }
+    }
+
+    private var studyBook: Book? {
+        inProgressBooks.first { $0.attitude == .study }
+    }
+
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: Theme.Spacing.lg) {
                 GreetingSection()
+                LiveCounterTile()
                 WeekStripSection(days: readingDays)
                 StatCardsSection(days: readingDays)
                 content
@@ -44,9 +63,6 @@ struct HomeDashboardView: View {
             .padding(.bottom, Theme.Spacing.xl)
         }
         .background(Theme.Palette.canvas)
-        .navigationDestination(isPresented: $pushAllCurrentlyReading) {
-            AllCurrentlyReadingListView(onStart: startSession)
-        }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(item: $searchSheet) { sheet in
             switch sheet {
@@ -62,21 +78,24 @@ struct HomeDashboardView: View {
         if isLibraryEmpty {
             VStack(spacing: Theme.Spacing.md) {
                 MascotEmptyTile(onAddTapped: { searchSheet = .anyAttitude })
-                LiveCounterTile()
                 QuoteOfTheDayTile()
             }
         } else {
             VStack(spacing: Theme.Spacing.md) {
-                LiveCounterTile()
                 EntertainmentBookTile(
+                    book: entertainmentBook,
                     onStart: startSession,
                     onAddTapped: { searchSheet = .entertainment }
                 )
                 StudyBookTile(
+                    book: studyBook,
                     onStart: startSession,
                     onAddTapped: { searchSheet = .study }
                 )
-                AllCurrentlyReadingEntry(onTap: { pushAllCurrentlyReading = true })
+                AllCurrentlyReadingEntry(
+                    inProgressCount: inProgressBooks.count,
+                    onTap: onShowAllCurrentlyReading
+                )
                 QuoteOfTheDayTile()
                 FinishedSection(books: finishedBooks)
             }
@@ -84,7 +103,11 @@ struct HomeDashboardView: View {
     }
 
     private func startSession(_ book: Book) {
-        engine.start(book: book)
+        if let onStartSession {
+            onStartSession(book)
+        } else {
+            engine.start(book: book)
+        }
     }
 }
 

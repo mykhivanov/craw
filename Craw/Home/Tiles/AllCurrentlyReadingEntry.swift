@@ -1,10 +1,7 @@
-import SwiftData
 import SwiftUI
 
 struct AllCurrentlyReadingEntry: View {
-    @Query(filter: BookLibraryReader.inProgressPredicate, sort: BookLibraryReader.defaultSort)
-    private var inProgress: [Book]
-
+    let inProgressCount: Int
     let onTap: () -> Void
 
     var body: some View {
@@ -38,10 +35,10 @@ struct AllCurrentlyReadingEntry: View {
     }
 
     private var subtitle: String {
-        switch inProgress.count {
+        switch inProgressCount {
         case 0: "Add your first book"
         case 1: "1 book in progress"
-        default: "\(inProgress.count) books in progress"
+        default: "\(inProgressCount) books in progress"
         }
     }
 }

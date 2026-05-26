@@ -75,4 +75,12 @@ enum AppEnvironment {
             Task { try? await Clerk.shared.auth.signOut() }
         }
     }
+
+    static var quizService: QuizService {
+        #if DEBUG
+            return MockQuizService()
+        #else
+            return LiveQuizService(client: liveAPIClient)
+        #endif
+    }
 }

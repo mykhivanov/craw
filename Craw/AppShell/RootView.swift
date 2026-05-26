@@ -15,6 +15,14 @@ struct RootView: View {
         let book: Book
     }
 
+    private enum CoverContent: Identifiable {
+        case timer
+        case post
+        var id: Self {
+            self
+        }
+    }
+
     var body: some View {
         TabView {
             HomeTab()
@@ -27,11 +35,11 @@ struct RootView: View {
                 .tabItem { Label("Profile", systemImage: "person.crop.circle.fill") }
         }
         .tint(Theme.Palette.rausch)
-        .fullScreenCover(isPresented: sessionRunningBinding) {
-            SessionTimerView()
-        }
-        .fullScreenCover(isPresented: postStopBinding) {
-            PostSessionFlow()
+        .fullScreenCover(item: coverBinding) { content in
+            switch content {
+            case .timer: SessionTimerView()
+            case .post: PostSessionFlow()
+            }
         }
         .sheet(isPresented: $showRestoration) {
             if let pending = pendingRestoration {
@@ -50,16 +58,16 @@ struct RootView: View {
         }
     }
 
-    private var sessionRunningBinding: Binding<Bool> {
+    private var coverBinding: Binding<CoverContent?> {
         Binding(
-            get: { engine.state == .running || engine.state == .paused },
-            set: { _ in }
-        )
-    }
-
-    private var postStopBinding: Binding<Bool> {
-        Binding(
-            get: { engine.state == .stopped || engine.state == .saving },
+            get: {
+                let content: CoverContent? = switch engine.state {
+                case .running, .paused: .timer
+                case .stopped, .saving: .post
+                case .idle: nil
+                }
+                return content
+            },
             set: { _ in }
         )
     }

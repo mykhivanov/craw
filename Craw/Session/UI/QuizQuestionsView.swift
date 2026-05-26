@@ -136,15 +136,11 @@ struct QuizQuestionsView: View {
 
     private func loadQuestions() async {
         do {
+            let service = AppEnvironment.quizService
             let result: [APIQuizQuestion] = if let sectionOrPage {
-                try await AppEnvironment.liveAPIClient.quizQuestions(
-                    bookName: bookName,
-                    sectionOrPage: sectionOrPage
-                )
+                try await service.questions(bookName: bookName, sectionOrPage: sectionOrPage)
             } else {
-                try await AppEnvironment.liveAPIClient.quizQuestionsForFinishedBook(
-                    bookName: bookName
-                )
+                try await service.questionsForFinishedBook(bookName: bookName)
             }
             questions = result
             loadState = .loaded
@@ -160,7 +156,7 @@ struct QuizQuestionsView: View {
         isSubmitting = true
         defer { isSubmitting = false }
         do {
-            let grade = try await AppEnvironment.liveAPIClient.quizGrade(
+            let grade = try await AppEnvironment.quizService.grade(
                 bookName: bookName,
                 sectionOrPage: sectionOrPage,
                 answers: answers

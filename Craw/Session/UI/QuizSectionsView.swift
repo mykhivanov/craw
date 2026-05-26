@@ -125,7 +125,7 @@ struct QuizSectionsView: View {
 
     private func loadSections() async {
         do {
-            let result = try await AppEnvironment.liveAPIClient.quizSections(bookName: bookName)
+            let result = try await AppEnvironment.quizService.sections(bookName: bookName)
             sections = result
             loadState = .loaded
         } catch {
