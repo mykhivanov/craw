@@ -19,7 +19,6 @@ final class LiveActivityController {
             bookID: book.id,
             bookTitle: book.title,
             bookAuthor: book.author,
-            totalPages: book.totalPages,
             startedAt: engine.startedAt
         )
         let state = currentState(for: engine)
@@ -75,8 +74,7 @@ final class LiveActivityController {
         return ReadingActivityAttributes.ContentState(
             phase: phase,
             accumulatedElapsedSeconds: accumulated,
-            lastResumeAt: lastResumeAt,
-            currentPage: engine.currentPage
+            lastResumeAt: lastResumeAt
         )
     }
 

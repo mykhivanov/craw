@@ -1,16 +1,19 @@
 # reading-activity Specification
 
 ## Purpose
-TBD - created by archiving change add-home-dashboard. Update Purpose after archive.
+
+`reading-activity` owns the `ReadingDay` aggregate that the home dashboard renders into the 7-day strip, the today-minutes stat card, and the streak counter. After the redesign-reading-session-flow change, the aggregate is denominated in minutes only — per-page tracking is removed at the model layer (`Book` and `ReadingSession`), so day-level page accounting goes too.
+
 ## Requirements
+
 ### Requirement: ReadingDay domain model
 
-The system SHALL persist a `ReadingDay` entity keyed by a local-calendar date with the following fields: date (date-only, no time component), total minutes read, total pages read. There SHALL be at most one `ReadingDay` row per date.
+The system SHALL persist a `ReadingDay` entity keyed by a local-calendar date with the following fields: date (date-only, no time component) and total minutes read. There SHALL be at most one `ReadingDay` row per date. The previously-stored `pagesRead` field is removed.
 
 #### Scenario: One row per date
 
 - **WHEN** activity is logged on the same local date twice
-- **THEN** a single `ReadingDay` row exists for that date with both contributions aggregated
+- **THEN** a single `ReadingDay` row exists for that date with both minute contributions aggregated
 
 ### Requirement: Local-calendar day bucketing
 
@@ -24,12 +27,12 @@ All date assignments for `ReadingDay` SHALL use `Calendar.autoupdatingCurrent` t
 
 ### Requirement: Today's metrics query
 
-The system SHALL expose a read-only mechanism to retrieve today's `ReadingDay` (minutes read and pages read). If today has no row, the response SHALL be zero for both fields rather than absent.
+The system SHALL expose a read-only mechanism to retrieve today's `ReadingDay` minutes read. If today has no row, the response SHALL be zero rather than absent.
 
 #### Scenario: No activity today
 
 - **WHEN** today has no `ReadingDay` row
-- **THEN** the today-metrics query returns minutes = 0 and pages = 0
+- **THEN** the today-metrics query returns minutes = 0
 
 ### Requirement: Last-7-days query
 
@@ -39,22 +42,27 @@ The system SHALL expose a read-only mechanism to retrieve `ReadingDay` data for 
 
 - **WHEN** the user has activity on only 2 of the last 7 days
 - **THEN** the query returns 7 entries
-- **AND** 5 of them have zero minutes and zero pages
+- **AND** 5 of them have zero minutes
 
-### Requirement: Day-over-day pages delta
+### Requirement: Day-over-day minutes delta
 
-The system SHALL provide a derivation of today's pages-read percentage change versus yesterday's pages-read. The result SHALL distinguish three cases: a numeric percentage when yesterday had non-zero pages; an "increase from zero" indicator when yesterday was zero and today is non-zero; an "unchanged" indicator when both are zero.
+The system SHALL provide a derivation of today's minutes-read percentage change versus yesterday's minutes-read. The result SHALL distinguish three cases: a numeric percentage when yesterday had non-zero minutes; an "increase from zero" indicator when yesterday was zero and today is non-zero; an "unchanged" indicator when both are zero.
 
 #### Scenario: Standard percentage
 
-- **WHEN** today = 30 pages and yesterday = 20 pages
+- **WHEN** today = 30 minutes and yesterday = 20 minutes
 - **THEN** the derivation returns +50%
 
 #### Scenario: Yesterday was zero
 
-- **WHEN** yesterday = 0 pages and today = 15 pages
+- **WHEN** yesterday = 0 minutes and today = 15 minutes
 - **THEN** the derivation returns an "increase from zero" indicator
 - **AND** no percentage value is exposed
+
+#### Scenario: Both days zero
+
+- **WHEN** yesterday = 0 minutes and today = 0 minutes
+- **THEN** the derivation returns an "unchanged" indicator
 
 ### Requirement: Current streak derivation
 
@@ -94,50 +102,30 @@ The "present calendar week" SHALL be the calendar week that contains today, not 
 - **WHEN** today is the first weekday of the calendar week and no activity has been logged yet
 - **THEN** the derivation returns seven entries with today as the only highlighted day and no entry marked as having activity
 
-### Requirement: Write-side ownership
-
-This capability SHALL NOT define how `ReadingDay` rows are written. Writes are owned by the future `add-session-quiz-verification` change. Within this change, rows MAY be seeded via the debug-only sample-data path to populate the dashboard for demos.
-
-#### Scenario: No production write paths in this change
-
-- **WHEN** any Home-tab interaction completes in this change
-- **THEN** no `ReadingDay` row is created or modified outside of the debug sample-data seeder
-
 ### Requirement: Sessions write to ReadingDay
 
-On completion of the post-stop pipeline, the system SHALL upsert a `ReadingDay` row for each local-calendar day the session touched. The row's `minutesRead` and `pagesRead` SHALL be incremented by the session's contributions to that day. A row SHALL be created if absent; an existing row SHALL be updated in place. There SHALL remain at most one `ReadingDay` per local date.
+On completion of the post-stop pipeline, the system SHALL upsert a `ReadingDay` row for each local-calendar day the session touched. The row's `minutesRead` SHALL be incremented by the session's contribution to that day. A row SHALL be created if absent; an existing row SHALL be updated in place. There SHALL remain at most one `ReadingDay` per local date.
 
 #### Scenario: Single-day session
 
-- **WHEN** a session of 20 minutes and 15 pages stops on a day that has no `ReadingDay` row
-- **THEN** a new `ReadingDay` row is created with `minutesRead = 20` and `pagesRead = 15`
+- **WHEN** a session of 20 minutes stops on a day that has no `ReadingDay` row
+- **THEN** a new `ReadingDay` row is created with `minutesRead = 20`
 
 #### Scenario: Multiple sessions same day
 
-- **WHEN** today already has a `ReadingDay` with `minutesRead = 10, pagesRead = 5` and a new session of 25 minutes and 12 pages stops today
-- **THEN** today's `ReadingDay` is updated in place to `minutesRead = 35, pagesRead = 17`
+- **WHEN** today already has a `ReadingDay` with `minutesRead = 10` and a new session of 25 minutes stops today
+- **THEN** today's `ReadingDay` is updated in place to `minutesRead = 35`
 - **AND** still exactly one `ReadingDay` row exists for today
 
 ### Requirement: Cross-midnight minute split
 
-A session whose start and end span a local-midnight boundary SHALL contribute its minutes proportionally to each affected day's `ReadingDay`. Page contributions SHALL be attributed entirely to the day on which the session stopped, since per-moment page state is not tracked.
+A session whose start and end span a local-midnight boundary SHALL contribute its minutes proportionally to each affected day's `ReadingDay`. There SHALL be no per-page attribution to consider, since per-session page state is no longer tracked.
 
 #### Scenario: Session spans midnight
 
-- **WHEN** a session starts at 23:40 local time and stops at 00:20 local time the next day, with 8 pages read
+- **WHEN** a session starts at 23:40 local time and stops at 00:20 local time the next day
 - **THEN** the prior day's `ReadingDay.minutesRead` is incremented by 20
 - **AND** the new day's `ReadingDay.minutesRead` is incremented by 20
-- **AND** the new day's `ReadingDay.pagesRead` is incremented by 8
-- **AND** the prior day's `ReadingDay.pagesRead` is unchanged
-
-### Requirement: Hard-days derivation surface
-
-The `ReadingActivityReader` SHALL expose a `hardDaysInLastSevenDays() -> Int` function whose definition aligns with the hard-day rule in `session-retrospective`: a day is hard if any session ending on it has `startDifficulty >= 4` OR `focusDifficulty >= 4`. The function SHALL return a value in [0, 7].
-
-#### Scenario: Reader exposes hard-days count
-
-- **WHEN** a caller invokes `hardDaysInLastSevenDays()` and three of the last seven days qualify as hard
-- **THEN** the function returns 3
 
 ### Requirement: Writes happen exactly once per session
 
@@ -148,4 +136,3 @@ A session's contribution to `ReadingDay` SHALL be applied exactly once across th
 - **WHEN** the post-stop pipeline begins writing a session's contribution and is interrupted, then resumes on next app launch
 - **THEN** the affected `ReadingDay` rows reflect the session's contribution exactly once
 - **AND** no duplicate contribution is applied
-

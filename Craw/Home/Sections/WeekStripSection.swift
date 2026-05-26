@@ -86,8 +86,8 @@ struct DayCell: View {
     let twoDaysAgo = calendar.date(byAdding: .day, value: -2, to: today)!
     let fiveDaysAgo = calendar.date(byAdding: .day, value: -5, to: today)!
     return WeekStripSection(days: [
-        ReadingDay(date: twoDaysAgo, minutesRead: 25, pagesRead: 10),
-        ReadingDay(date: fiveDaysAgo, minutesRead: 45, pagesRead: 12)
+        ReadingDay(date: twoDaysAgo, minutesRead: 25),
+        ReadingDay(date: fiveDaysAgo, minutesRead: 45)
     ])
     .padding()
 }

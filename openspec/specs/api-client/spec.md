@@ -1,8 +1,11 @@
 # api-client Specification
 
 ## Purpose
-TBD - created by archiving change add-auth-and-book-search. Update Purpose after archive.
+
+`CrawAPIClient` is the iOS app's single transport into the Craw backend. It owns request construction (path + JWT envelope), auth-failure retry, typed error mapping, and JSON encoding/decoding. All capabilities that talk to `api.craw.app` SHALL go through this actor; no other code constructs `URLRequest`s against the backend.
+
 ## Requirements
+
 ### Requirement: Authenticated request envelope
 
 Every request sent by `CrawAPIClient` SHALL include the header `Authorization: Bearer <token>` where `<token>` is the JWT returned by the configured `AuthTokenProvider`. Requests SHALL also include `Accept: application/json` and, for requests with a body, `Content-Type: application/json`. The base URL SHALL be read from `Info.plist["CRAW_API_BASE_URL"]` with a default of `https://api.craw.app/v1`.
@@ -76,3 +79,63 @@ Request and response bodies SHALL be encoded and decoded as JSON. Dates SHALL us
 - **WHEN** the response contains `"date_added": "2026-05-24T14:33:21.123Z"`
 - **THEN** it is decoded into a Swift property `dateAdded: Date` representing 2026-05-24 14:33:21.123 UTC
 
+### Requirement: Quiz sections endpoint
+
+`CrawAPIClient` SHALL expose a method that issues `POST /v1/quiz/sections` with JSON body `{ bookName: String }` and decodes the response as `[String]` (an array of plain-text section names). The method SHALL use the standard authenticated envelope (Authorization Bearer JWT) and SHALL surface failures via `APIError` like all other client methods.
+
+#### Scenario: Successful sections fetch
+
+- **WHEN** the caller invokes the sections method with `bookName = "Project Hail Mary"`
+- **THEN** an HTTPS POST is sent to `<baseURL>/quiz/sections` with body `{"bookName":"Project Hail Mary"}`
+- **AND** the response body is decoded as `[String]` and returned to the caller
+
+#### Scenario: 401 triggers refresh-and-retry
+
+- **WHEN** the first attempt returns HTTP 401
+- **THEN** the existing refresh-and-retry behavior applies (see "401 refresh-and-retry" above)
+
+### Requirement: Quiz questions endpoint
+
+`CrawAPIClient` SHALL expose a method that issues `POST /v1/quiz/questions` with one of two JSON body shapes:
+- `{ bookName: String, sectionOrPage: String }` — when the user picked a section or typed a page on the picker screen.
+- `{ bookName: String, finished: true }` — when the user reached the quiz via the "Book is finished" button on the timer (the section picker is skipped in this path).
+
+The response SHALL decode as `[QuizQuestion]` where `QuizQuestion = { question: String, options: [String] }`. The number of questions and the number of options per question are determined per-call by the server.
+
+#### Scenario: Question fetch with section selection
+
+- **WHEN** the caller invokes the questions method with `bookName = "Project Hail Mary"` and `sectionOrPage = "Part 2"`
+- **THEN** an HTTPS POST is sent with body `{"bookName":"Project Hail Mary","sectionOrPage":"Part 2"}`
+- **AND** the response is decoded into a `[QuizQuestion]` array
+
+#### Scenario: Question fetch with page input
+
+- **WHEN** the caller invokes the questions method with `bookName = "Project Hail Mary"` and `sectionOrPage = "147"`
+- **THEN** the body is `{"bookName":"Project Hail Mary","sectionOrPage":"147"}`
+
+#### Scenario: Question fetch on book-finished path
+
+- **WHEN** the caller invokes the questions method indicating the book was just finished (no section selection)
+- **THEN** the body is `{"bookName":"Project Hail Mary","finished":true}`
+- **AND** no `sectionOrPage` key is present in the request body
+
+### Requirement: Quiz grade endpoint
+
+`CrawAPIClient` SHALL expose a method that issues `POST /v1/quiz/grade` with JSON body `{ bookName: String, sectionOrPage: String?, answers: [String] }`. The `answers` array SHALL be passed in the same order as the questions returned by `/v1/quiz/questions`; each element SHALL be the literal option text the user selected. The `sectionOrPage` field SHALL be omitted when the questions step was reached via the book-finished path. The response SHALL decode as `{ mark: Int }` where `mark ∈ {1, 2, 3}`.
+
+#### Scenario: Grade after section-based quiz
+
+- **WHEN** the caller invokes the grade method with `bookName`, `sectionOrPage = "Part 2"`, and `answers = ["Bob", "Earth"]`
+- **THEN** an HTTPS POST is sent with body `{"bookName":"...","sectionOrPage":"Part 2","answers":["Bob","Earth"]}`
+- **AND** the response is decoded into `{ mark: Int }` and returned
+
+#### Scenario: Grade after book-finished quiz
+
+- **WHEN** the caller invokes the grade method on the book-finished path (no `sectionOrPage`)
+- **THEN** the request body omits the `sectionOrPage` key entirely
+- **AND** the request body contains `bookName` and `answers`
+
+#### Scenario: Server returns invalid mark
+
+- **WHEN** the server returns `{ mark: 0 }` or `{ mark: 4 }` (outside the 1–3 range)
+- **THEN** the client returns `APIError.decoding` rather than surfacing an invalid mark to the UI

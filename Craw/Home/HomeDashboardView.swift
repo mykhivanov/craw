@@ -2,16 +2,30 @@ import SwiftData
 import SwiftUI
 
 struct HomeDashboardView: View {
+    @Environment(SessionEngine.self) private var engine
+
     @Query(filter: BookLibraryReader.inProgressPredicate, sort: BookLibraryReader.defaultSort)
     private var inProgressBooks: [Book]
 
-    @Query(filter: BookLibraryReader.finishedPredicate, sort: BookLibraryReader.defaultSort)
+    @Query(filter: BookLibraryReader.finishedPredicate, sort: BookLibraryReader.finishedSort)
     private var finishedBooks: [Book]
 
     @Query(sort: [SortDescriptor(\ReadingDay.date, order: .reverse)])
     private var readingDays: [ReadingDay]
 
-    @State private var isSearchPresented = false
+    @State private var searchSheet: SearchSheet?
+    @State private var pushAllCurrentlyReading = false
+
+    private enum SearchSheet: Identifiable {
+        case entertainment, study, anyAttitude
+        var id: String {
+            switch self {
+            case .entertainment: "entertainment"
+            case .study: "study"
+            case .anyAttitude: "any"
+            }
+        }
+    }
 
     private var isLibraryEmpty: Bool {
         inProgressBooks.isEmpty && finishedBooks.isEmpty
@@ -23,36 +37,54 @@ struct HomeDashboardView: View {
                 GreetingSection()
                 WeekStripSection(days: readingDays)
                 StatCardsSection(days: readingDays)
-                tileColumn
+                content
             }
             .padding(.horizontal, Theme.Spacing.base)
             .padding(.top, Theme.Spacing.base)
             .padding(.bottom, Theme.Spacing.xl)
         }
         .background(Theme.Palette.canvas)
-        .navigationDestination(for: Book.self) { book in
-            BookDetailView(book: book)
+        .navigationDestination(isPresented: $pushAllCurrentlyReading) {
+            AllCurrentlyReadingListView(onStart: startSession)
         }
         .toolbar(.hidden, for: .navigationBar)
-        .sheet(isPresented: $isSearchPresented) {
-            BookSearchView()
-        }
-    }
-
-    private var tileColumn: some View {
-        VStack(spacing: Theme.Spacing.md) {
-            if isLibraryEmpty {
-                MascotEmptyTile(onAddTapped: presentSearch)
+        .sheet(item: $searchSheet) { sheet in
+            switch sheet {
+            case .entertainment: BookSearchView(presetAttitude: .entertainment)
+            case .study: BookSearchView(presetAttitude: .study)
+            case .anyAttitude: BookSearchView()
             }
-            LiveCounterTile()
-            EntertainmentBookTile(onAddTapped: presentSearch)
-            StudyBookTile(onAddTapped: presentSearch)
-            QuoteOfTheDayTile()
         }
     }
 
-    private func presentSearch() {
-        isSearchPresented = true
+    @ViewBuilder
+    private var content: some View {
+        if isLibraryEmpty {
+            VStack(spacing: Theme.Spacing.md) {
+                MascotEmptyTile(onAddTapped: { searchSheet = .anyAttitude })
+                LiveCounterTile()
+                QuoteOfTheDayTile()
+            }
+        } else {
+            VStack(spacing: Theme.Spacing.md) {
+                LiveCounterTile()
+                EntertainmentBookTile(
+                    onStart: startSession,
+                    onAddTapped: { searchSheet = .entertainment }
+                )
+                StudyBookTile(
+                    onStart: startSession,
+                    onAddTapped: { searchSheet = .study }
+                )
+                AllCurrentlyReadingEntry(onTap: { pushAllCurrentlyReading = true })
+                QuoteOfTheDayTile()
+                FinishedSection(books: finishedBooks)
+            }
+        }
+    }
+
+    private func startSession(_ book: Book) {
+        engine.start(book: book)
     }
 }
 
@@ -61,24 +93,11 @@ struct HomeDashboardView: View {
     SampleData.seed(into: ModelContext(container))
     return NavigationStack { HomeDashboardView() }
         .modelContainer(container)
+        .environment(SessionEngine.shared)
 }
 
 #Preview("Empty library") {
     NavigationStack { HomeDashboardView() }
         .modelContainer(CrawModelContainer.previewInMemory())
-}
-
-#Preview("Only-finished library") {
-    let container = CrawModelContainer.previewInMemory()
-    let ctx = ModelContext(container)
-    ctx.insert(Book(
-        title: "Done & Dusted",
-        author: "An Author",
-        totalPages: 200,
-        currentPage: 200,
-        attitude: .entertainment
-    ))
-    try? ctx.save()
-    return NavigationStack { HomeDashboardView() }
-        .modelContainer(container)
+        .environment(SessionEngine.shared)
 }

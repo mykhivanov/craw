@@ -20,8 +20,10 @@ final class SessionEngine {
     private(set) var endedAt: Date?
     private(set) var accumulatedElapsedSeconds: Int = 0
     private(set) var lastResumeAt: Date?
-    private(set) var startingPage: Int = 0
-    private(set) var currentPage: Int = 0
+    /// True when the user ended this session via "Book is finished" (rather than "Finish").
+    /// The post-session flow reads this to skip the section picker and jump straight to
+    /// quiz questions on the book-finished path.
+    private(set) var endedAsBookFinished: Bool = false
 
     private let cache: ActiveSessionCaching
     private var autosaveTask: Task<Void, Never>?
@@ -32,10 +34,6 @@ final class SessionEngine {
 
     var elapsedSeconds: Int {
         liveAccumulated()
-    }
-
-    var pagesRead: Int {
-        max(0, currentPage - startingPage)
     }
 
     var isActive: Bool {
@@ -53,9 +51,8 @@ final class SessionEngine {
         startedAt = now
         endedAt = nil
         accumulatedElapsedSeconds = 0
-        startingPage = book.currentPage
-        currentPage = book.currentPage
         lastResumeAt = now
+        endedAsBookFinished = false
         state = .running
         scheduleAutosave()
         persistSnapshot()
@@ -83,25 +80,18 @@ final class SessionEngine {
         LiveActivityController.shared.update(engine: self)
     }
 
-    func stop(now: Date = .now) {
+    func stop(now: Date = .now, asBookFinished: Bool = false) {
         guard state == .running || state == .paused else { return }
         if state == .running, let resume = lastResumeAt {
             accumulatedElapsedSeconds += Int(now.timeIntervalSince(resume))
             lastResumeAt = nil
         }
         endedAt = now
+        endedAsBookFinished = asBookFinished
         cancelAutosave()
         state = .stopped
         persistSnapshot()
         LiveActivityController.shared.end()
-    }
-
-    func setCurrentPage(_ page: Int) {
-        guard state == .running || state == .paused else { return }
-        let upperBound = book?.totalPages ?? Int.max
-        currentPage = max(startingPage, min(page, upperBound))
-        persistSnapshot()
-        LiveActivityController.shared.update(engine: self)
     }
 
     func beginSaving() {
@@ -118,8 +108,7 @@ final class SessionEngine {
         endedAt = nil
         accumulatedElapsedSeconds = 0
         lastResumeAt = nil
-        startingPage = 0
-        currentPage = 0
+        endedAsBookFinished = false
         LiveActivityController.shared.end()
     }
 
@@ -131,8 +120,7 @@ final class SessionEngine {
         startedAt = snapshot.startedAt
         endedAt = nil
         accumulatedElapsedSeconds = snapshot.accumulatedElapsedSeconds
-        startingPage = snapshot.startingPage
-        currentPage = snapshot.currentPage
+        endedAsBookFinished = false
         if snapshot.isPaused {
             lastResumeAt = nil
             state = .paused
@@ -152,8 +140,6 @@ final class SessionEngine {
             bookID: book.id,
             startedAt: startedAt,
             accumulatedElapsedSeconds: liveAccumulated(),
-            startingPage: startingPage,
-            currentPage: currentPage,
             isPaused: state == .paused,
             lastCheckpointAt: .now
         )

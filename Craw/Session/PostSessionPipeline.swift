@@ -10,8 +10,7 @@ final class PostSessionPipeline {
     }
 
     /// Insert (or fetch existing) `ReadingSession` for the just-stopped engine,
-    /// update the book's `currentPage`, and upsert `ReadingDay` rows with
-    /// cross-midnight split (minutes split, pages attributed entirely to stop-day).
+    /// and upsert `ReadingDay` rows with cross-midnight minute split.
     /// Idempotent on `(bookID, endedAt)` — re-entry returns the existing row.
     func commit(_ engine: SessionEngine) -> ReadingSession? {
         guard let book = engine.book, let endedAt = engine.endedAt else { return nil }
@@ -29,22 +28,16 @@ final class PostSessionPipeline {
             bookID: bookID,
             startedAt: startedAt,
             endedAt: endedAt,
-            elapsedSeconds: engine.elapsedSeconds,
-            pagesRead: engine.pagesRead,
-            verification: .pending
+            elapsedSeconds: engine.elapsedSeconds
         )
         modelContext.insert(session)
-        book.currentPage = engine.currentPage
 
         let buckets = MidnightSplitter.split(startedAt: startedAt, endedAt: endedAt)
-        let stopDay = Calendar.autoupdatingCurrent.startOfDay(for: endedAt)
         for bucket in buckets {
             let minutes = bucket.seconds / 60
-            let pages = bucket.date == stopDay ? engine.pagesRead : 0
             try? ReadingDay.upsert(
                 on: bucket.date,
                 addingMinutes: minutes,
-                addingPages: pages,
                 in: modelContext
             )
         }
@@ -53,44 +46,44 @@ final class PostSessionPipeline {
         return session
     }
 
-    func saveThoughts(_ texts: [String], for bookID: UUID) {
-        for text in texts {
-            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !trimmed.isEmpty else { continue }
-            modelContext.insert(Thought(bookID: bookID, text: trimmed))
-        }
-        try? modelContext.save()
-    }
-
-    func saveRetrospective(
-        sessionID: UUID,
-        startDifficulty: Int,
-        focusDifficulty: Int,
-        enjoyment: Int
-    ) {
+    func saveRetrospective(sessionID: UUID, focusDifficulty: Int) {
         modelContext.insert(SessionRetrospective(
             sessionID: sessionID,
-            startDifficulty: startDifficulty,
-            focusDifficulty: focusDifficulty,
-            enjoyment: enjoyment
+            focusDifficulty: focusDifficulty
         ))
         try? modelContext.save()
     }
 
-    func updateVerification(
+    func updateQuizResult(
         sessionID: UUID,
-        to state: VerificationState,
-        reflectionText: String? = nil
+        sectionOrPageHint: String?,
+        mark: Int?
     ) {
         let descriptor = FetchDescriptor<ReadingSession>(
             predicate: #Predicate { $0.id == sessionID }
         )
         guard let session = try? modelContext.fetch(descriptor).first else { return }
-        session.verification = state
-        if let reflectionText {
-            session.reflectionText = reflectionText
+        if let sectionOrPageHint {
+            session.sectionOrPageHint = sectionOrPageHint
+        }
+        if let mark {
+            session.quizMark = mark
         }
         try? modelContext.save()
+    }
+
+    /// Idempotent: flips `isFinished = true` and stamps `finishedAt = .now` only on the
+    /// first call. Re-entry preserves the original `finishedAt`.
+    func markBookFinished(bookID: UUID) {
+        let descriptor = FetchDescriptor<Book>(
+            predicate: #Predicate { $0.id == bookID }
+        )
+        guard let book = try? modelContext.fetch(descriptor).first else { return }
+        if !book.isFinished {
+            book.isFinished = true
+            book.finishedAt = .now
+            try? modelContext.save()
+        }
     }
 
     /// Returns the user's current streak length, computed by reading the

@@ -11,11 +11,12 @@ final class Book {
     var coverImageURL: URL?
     var isbn: String?
     var totalPages: Int
-    var currentPage: Int
     var dateAdded: Date
     /// Stored as String because #Predicate can't traverse enum cases as key paths.
     /// Lightweight migration uses the declaration-site default for old rows.
     var attitudeRaw: String = BookAttitude.entertainment.rawValue
+    var isFinished: Bool = false
+    var finishedAt: Date?
 
     var attitude: BookAttitude {
         get { BookAttitude(rawValue: attitudeRaw) ?? .entertainment }
@@ -31,9 +32,10 @@ final class Book {
         coverImageURL: URL? = nil,
         isbn: String? = nil,
         totalPages: Int,
-        currentPage: Int = 0,
         dateAdded: Date = .now,
-        attitude: BookAttitude
+        attitude: BookAttitude,
+        isFinished: Bool = false,
+        finishedAt: Date? = nil
     ) {
         self.id = id
         self.remoteID = remoteID
@@ -43,9 +45,10 @@ final class Book {
         self.coverImageURL = coverImageURL
         self.isbn = isbn
         self.totalPages = totalPages
-        self.currentPage = currentPage
         self.dateAdded = dateAdded
         attitudeRaw = attitude.rawValue
+        self.isFinished = isFinished
+        self.finishedAt = finishedAt
     }
 }
 
@@ -55,20 +58,12 @@ enum BookAttitude: String, Codable, CaseIterable {
 }
 
 enum BookStatus {
-    case notStarted
     case inProgress
     case finished
 }
 
 extension Book {
     var status: BookStatus {
-        if currentPage <= 0 { return .notStarted }
-        if currentPage >= totalPages { return .finished }
-        return .inProgress
-    }
-
-    var progressFraction: Double {
-        guard totalPages > 0 else { return 0 }
-        return min(1.0, max(0.0, Double(currentPage) / Double(totalPages)))
+        isFinished ? .finished : .inProgress
     }
 }

@@ -1,115 +1,130 @@
 # session-quiz Specification
 
 ## Purpose
-TBD - created by archiving change add-session-quiz-verification. Update Purpose after archive.
+
+`session-quiz` is the optional post-session quiz that lets a user verify their understanding of what they just read. After the redesign-reading-session-flow change, the quiz is server-driven (no on-device generation) and only runs for study-attitude books — for-fun sessions skip it. The flow is stateless on the server: the client sends the book name plus the user's selection on each call, and grading returns a single mark from 1–3 mapped to a titled feedback string.
+
 ## Requirements
-### Requirement: Quiz shape
 
-Each quiz SHALL contain exactly 4 multiple-choice questions and exactly 1 open-ended reflection prompt. Each multiple-choice question SHALL have exactly 4 distinct options labeled A, B, C, D and a single correct option. The reflection prompt SHALL accept free text and is never graded.
+### Requirement: Post-session quiz triggers only for study books
 
-#### Scenario: Generated quiz structure
+The post-session quiz flow SHALL trigger only when the just-ended session's book has `attitude == .study`. Sessions for books with `attitude == .entertainment` SHALL skip the quiz flow entirely and proceed directly to the retrospective.
 
-- **WHEN** the quiz pipeline produces a quiz for a session
-- **THEN** the result contains 4 multiple-choice questions and 1 open reflection prompt
-- **AND** each multiple-choice question has 4 distinct options and exactly one correct answer
+#### Scenario: For-fun session skips quiz
 
-### Requirement: On-device generation via Foundation Models
+- **WHEN** a session for a `.entertainment` book transitions to `saving`
+- **THEN** the post-session flow advances directly to the retrospective step
+- **AND** no `/v1/quiz/sections` request is made
 
-Quiz questions SHALL be generated on-device using Apple's `FoundationModels` framework with a guided/structured-output schema (`@Generable`). The generation prompt SHALL include: book title, book author, and the page range read in this session. No network call SHALL be made as part of quiz generation.
+#### Scenario: Study session enters quiz flow
 
-#### Scenario: Generation uses local model
+- **WHEN** a session for a `.study` book transitions to `saving` (via the "Finish" button)
+- **THEN** the post-session flow enters the section picker step before the retrospective
 
-- **WHEN** a session ends and a quiz is requested
-- **THEN** generation is performed by an on-device `LanguageModelSession`
-- **AND** no outbound network request is made
+### Requirement: Section picker fetches plain-text sections
 
-#### Scenario: Generation prompt scope
+When the quiz flow begins for a study book, the client SHALL issue `POST /v1/quiz/sections` with body `{ bookName: String }` (the book's title). The server returns a JSON array of plain-text section names: `[String]`. The client SHALL present these as a tappable list. The user SHALL also be able to type a page number into a free-text input as an alternative to picking a section, and SHALL be able to skip this step entirely.
 
-- **WHEN** a quiz is generated for a session spanning pages 40–67 of a book
-- **THEN** the prompt sent to the model identifies the book and the page range
-- **AND** instructs the model to draw questions from that section
+#### Scenario: Sections render as tappable list
 
-### Requirement: Verification states
+- **WHEN** the sections endpoint returns `["Part 1: Astrophage", "Part 2: The Bridge", "Part 3: Rocky"]`
+- **THEN** the screen renders three tappable rows containing those exact strings
 
-Every `ReadingSession` SHALL be assigned exactly one verification state on completion of the post-stop pipeline. The states SHALL be:
-- `verified` — user answered at least 3 of 4 multiple-choice questions correctly.
-- `failed` — user answered fewer than 3 of 4 multiple-choice questions correctly.
-- `skipped` — user dismissed or declined the quiz.
-- `unavailable` — the quiz could not be generated (model unavailable, generation errored, or output failed sanity checks).
+#### Scenario: User picks a section
 
-Only `verified` SHALL be displayed publicly as a "✓ verified" badge. The other three states SHALL count toward private progress (streak, pages, minutes) but SHALL render as unverified.
+- **WHEN** the user taps "Part 2: The Bridge"
+- **THEN** the flow advances to the questions step with `sectionOrPage = "Part 2: The Bridge"` carried in memory
 
-#### Scenario: User passes the quiz
+#### Scenario: User types a page number
 
-- **WHEN** the user answers 3 of 4 multiple-choice questions correctly
-- **THEN** the session is assigned `verification = .verified`
-- **AND** the session displays a "✓ verified" badge
+- **WHEN** the user types `147` into the page input and confirms
+- **THEN** the flow advances to the questions step with `sectionOrPage = "147"` carried in memory
 
-#### Scenario: User misses the threshold
+#### Scenario: User skips the picker
 
-- **WHEN** the user answers 2 of 4 multiple-choice questions correctly
-- **THEN** the session is assigned `verification = .failed`
-- **AND** the session does not display the verified badge
+- **WHEN** the user taps Skip on the section picker
+- **THEN** the flow advances directly to the retrospective step
+- **AND** no `/v1/quiz/questions` request is made
 
-#### Scenario: User skips the quiz
+#### Scenario: Sections request fails
 
-- **WHEN** the user dismisses the quiz without submitting answers
-- **THEN** the session is assigned `verification = .skipped`
+- **WHEN** the `/v1/quiz/sections` request returns any `APIError`
+- **THEN** the flow advances directly to the retrospective step
+- **AND** no error toast is required (graceful degradation)
 
-#### Scenario: Model unavailable
+### Requirement: Questions screen fetches questions for the selection
 
-- **WHEN** quiz generation fails because the on-device model is unavailable or errors
-- **THEN** the session is assigned `verification = .unavailable`
-- **AND** the user is shown a brief "Skip verification this time" acknowledgment and proceeds to the retrospective
+When the user advances from the section picker with a selection, the client SHALL issue `POST /v1/quiz/questions` with body `{ bookName: String, sectionOrPage: String }`. When the user reached the quiz flow via the "Book is finished" button, the body SHALL be `{ bookName: String, finished: true }` (no `sectionOrPage` field) and the section picker SHALL be skipped entirely.
 
-### Requirement: Sanity checks on generated output
+The server returns a JSON array of `{ question: String, options: [String] }`. The client SHALL render each question with its options as a single-select picker. The user SHALL be able to skip the quiz at any point from this screen.
 
-Before presenting a quiz to the user, the system SHALL validate the generated output against these rules:
-1. Exactly 4 multiple-choice questions are present.
-2. Each multiple-choice question has exactly 4 options.
-3. Each multiple-choice question's options are mutually distinct.
-4. Each multiple-choice question has a `correctIndex` in range [0, 3].
-5. The reflection prompt is non-empty.
+#### Scenario: Questions render as single-select pickers
 
-If any rule fails, generation SHALL be treated as failed and the session SHALL be assigned `verification = .unavailable`.
+- **WHEN** the questions endpoint returns `[{ question: "Who narrates?", options: ["Alice", "Bob", "Carol", "Dan"] }, { question: "Where?", options: ["Mars", "Moon", "Venus", "Earth"] }]`
+- **THEN** the screen renders two questions, each with four single-select options
 
-#### Scenario: Malformed generation
+#### Scenario: Book-is-finished skips picker
 
-- **WHEN** generation returns 3 multiple-choice questions instead of 4
-- **THEN** the validator rejects the output
-- **AND** the session is assigned `verification = .unavailable`
+- **WHEN** the user tapped "Book is finished" for a study book and the post-session flow enters
+- **THEN** the section picker step is skipped
+- **AND** the client issues `POST /v1/quiz/questions` with body `{ bookName, finished: true }`
 
-### Requirement: Single attempt per session
+#### Scenario: User skips the questions
 
-A session SHALL permit exactly one quiz attempt. After the user submits answers or skips, the verification state SHALL be final for that session.
+- **WHEN** the user taps Skip on the questions screen
+- **THEN** the flow advances directly to the retrospective step
+- **AND** no `/v1/quiz/grade` request is made
+- **AND** the saved `ReadingSession.quizMark` remains `nil`
 
-#### Scenario: No retake
+#### Scenario: Questions request fails
 
-- **WHEN** the user submits answers and receives a `failed` result
-- **THEN** no UI affordance is presented to retake the quiz for that session
+- **WHEN** the `/v1/quiz/questions` request returns any `APIError`
+- **THEN** the flow advances directly to the retrospective step
 
-### Requirement: Open-reflection storage
+### Requirement: Grade returns a mark mapped to titled feedback
 
-The user's response to the open-reflection prompt SHALL be persisted on the session record as a free-text field. An empty or omitted reflection is permitted.
+When the user selects an option for every returned question and taps Continue, the client SHALL issue `POST /v1/quiz/grade` with body `{ bookName: String, sectionOrPage: String?, answers: [String] }`. The `answers` array SHALL contain the selected option strings in the same order as the questions returned by `/v1/quiz/questions`. The server returns `{ mark: Int }` where `mark ∈ {1, 2, 3}`.
 
-#### Scenario: User writes a reflection
+The client SHALL display the result as titled feedback:
+- `mark = 1` → "Consider rereading"
+- `mark = 2` → "Good"
+- `mark = 3` → "Great session"
 
-- **WHEN** the user enters text for the reflection prompt and submits the quiz
-- **THEN** the text is persisted on the `ReadingSession` record
+The client SHALL persist `ReadingSession.quizMark = mark` and `ReadingSession.sectionOrPageHint = sectionOrPage` (when present) before advancing to the retrospective.
 
-#### Scenario: User leaves reflection empty
+#### Scenario: Mark 1 renders "Consider rereading"
 
-- **WHEN** the user submits the quiz with the reflection field empty
-- **THEN** the reflection field on the session record is empty
-- **AND** the verification state is unaffected by the empty reflection
+- **WHEN** the grade endpoint returns `{ mark: 1 }`
+- **THEN** the feedback screen displays "Consider rereading"
 
-### Requirement: Threshold is a centralized constant
+#### Scenario: Mark 2 renders "Good"
 
-The "3 of 4" pass threshold SHALL be defined exactly once in the codebase as a named constant. UI copy, grading logic, and any future tuning change SHALL reference that single constant.
+- **WHEN** the grade endpoint returns `{ mark: 2 }`
+- **THEN** the feedback screen displays "Good"
 
-#### Scenario: Single source of truth
+#### Scenario: Mark 3 renders "Great session"
 
-- **WHEN** the threshold value is referenced in code
-- **THEN** all references resolve to one named constant
-- **AND** changing the constant in one place changes the threshold everywhere
+- **WHEN** the grade endpoint returns `{ mark: 3 }`
+- **THEN** the feedback screen displays "Great session"
 
+#### Scenario: Mark persists to the session record
+
+- **WHEN** the user advances past the feedback screen with `mark = 2` and `sectionOrPage = "Chapter 4"`
+- **THEN** the `ReadingSession.quizMark` becomes `2`
+- **AND** the `ReadingSession.sectionOrPageHint` becomes `"Chapter 4"`
+
+#### Scenario: Grade request fails
+
+- **WHEN** the `/v1/quiz/grade` request returns any `APIError`
+- **THEN** the flow advances directly to the retrospective step
+- **AND** `ReadingSession.quizMark` remains `nil`
+
+### Requirement: Quiz is skippable at every step
+
+The user SHALL be able to skip the quiz flow at any step (section picker, questions, between questions). Skipping SHALL not surface an error or warning. Skipping SHALL not affect `ReadingDay` minutes, streak credit, or the retrospective step.
+
+#### Scenario: Skip from any step lands on retrospective
+
+- **WHEN** the user taps Skip at any quiz-flow step
+- **THEN** the next screen presented is the retrospective
+- **AND** the session's minute and streak credits are unchanged

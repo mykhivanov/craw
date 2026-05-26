@@ -4,8 +4,6 @@ struct ActiveSessionSnapshot: Codable, Equatable {
     let bookID: UUID
     let startedAt: Date
     let accumulatedElapsedSeconds: Int
-    let startingPage: Int
-    let currentPage: Int
     let isPaused: Bool
     let lastCheckpointAt: Date
 }
@@ -17,12 +15,18 @@ protocol ActiveSessionCaching: AnyObject {
 }
 
 final class ActiveSessionCache: ActiveSessionCaching {
-    private static let key = "CrawActiveSession"
+    /// Bumped from v1: the snapshot no longer carries `startingPage`/`currentPage`.
+    /// A stale v1 cache fails to decode and is silently cleared on next load.
+    private static let key = "CrawActiveSession.v2"
+    private static let legacyKeys = ["CrawActiveSession"]
 
     private let defaults: UserDefaults
 
     nonisolated init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        for legacy in Self.legacyKeys {
+            defaults.removeObject(forKey: legacy)
+        }
     }
 
     func save(_ snapshot: ActiveSessionSnapshot) {

@@ -1,52 +1,62 @@
 # book-library Specification
 
 ## Purpose
-TBD - created by archiving change add-home-dashboard. Update Purpose after archive.
+
+The local book library is the on-device source of truth for what the user is reading. Books are inserted via `book-search` and surfaced to the user via `home-dashboard`. After the redesign-reading-session-flow change, a book's in-progress vs finished status is an explicit user-controlled flag (`isFinished`), not a derivation from page counts — there is no per-page progress tracking on the client.
+
 ## Requirements
+
 ### Requirement: Book domain model
 
-The system SHALL persist a `Book` entity with the following fields: stable identifier (`id`), optional backend identifier (`remoteID`), title, author, optional bundled cover-asset reference (`coverAssetName`), optional remote cover URL (`coverImageURL`), optional ISBN (`isbn`), total page count, current page count, date added. The model SHALL be persisted using the app's chosen on-device storage layer (SwiftData, per design). Adding `coverImageURL`, `isbn`, and `remoteID` as optional properties SHALL be handled by SwiftData's automatic lightweight migration; no explicit migration plan code is required.
+The system SHALL persist a `Book` entity with the following fields: stable identifier (`id`), optional backend identifier (`remoteID`), title, author, optional bundled cover-asset reference (`coverAssetName`), optional remote cover URL (`coverImageURL`), optional ISBN (`isbn`), total page count (`totalPages`), date added (`dateAdded`), attitude (`attitudeRaw` persisted as a String mirroring `BookAttitude`), finished flag (`isFinished: Bool` defaulting to `false`), and optional finished-at timestamp (`finishedAt: Date?`). The model SHALL be persisted using the app's chosen on-device storage layer (SwiftData, per design).
+
+The previously-persisted `currentPage` field is removed in the redesign-reading-session-flow change. Removing a field is not a lightweight migration; the app SHALL hard-reset the local SwiftData store on first launch of the new schema version (see `app-shell` / `CrawModelContainer` for the wipe mechanic).
 
 #### Scenario: Persisted book survives relaunch
 
-- **WHEN** a book is added to the library and the app is relaunched
-- **THEN** the book is still present with all its fields intact, including `coverImageURL`, `isbn`, and `remoteID` when set
+- **WHEN** a book is added to the library and the app is relaunched within the same schema version
+- **THEN** the book is still present with all its fields intact, including `isFinished` and `finishedAt` when set
 
-#### Scenario: Existing seeded book after schema change
+#### Scenario: Newly added book defaults to unfinished
 
-- **WHEN** the app launches with a previously-seeded book whose `coverImageURL`, `isbn`, and `remoteID` were never set
-- **THEN** the book loads with all three optional properties equal to `nil`
-- **AND** the cover renders from the existing `coverAssetName`
+- **WHEN** a new `Book` is inserted via any code path
+- **THEN** the book has `isFinished = false`
+- **AND** `finishedAt = nil`
 
 ### Requirement: Derived reading status
 
-A book's status SHALL be derived from its page counts, not stored:
-- `inProgress` when current page is greater than 0 and less than total page count.
-- `finished` when current page is greater than or equal to total page count.
-- `notStarted` when current page is 0.
+A book's status SHALL be derived from the `isFinished` flag, not from page counts:
+- `finished` when `isFinished == true`.
+- `inProgress` when `isFinished == false`.
 
-For dashboard listing purposes (Reading Now / Finished), `notStarted` books SHALL be treated as in-progress and appear in the Reading Now section so newly added books are visible immediately.
+The `notStarted` state is removed — newly added books are simply `inProgress` until the user explicitly marks them finished. For dashboard listing purposes (For fun / To study / All currently reading entry points), only `inProgress` books are listed; finished books appear in the Finished section.
 
-#### Scenario: Newly added book appears in Reading Now
+#### Scenario: Newly added book is in-progress
 
-- **WHEN** a book is added with current page 0
-- **THEN** its status is treated as in-progress for listing
-- **AND** it appears in the Reading Now section of the dashboard
+- **WHEN** a book is added with `isFinished = false`
+- **THEN** its status is `inProgress`
+- **AND** it is eligible to appear under the For fun, To study, and All currently reading entry points based on attitude
 
-#### Scenario: Book reaches its page total
+#### Scenario: Book marked finished
 
-- **WHEN** a book's current page count is set to a value equal to or greater than its total page count
-- **THEN** its status is finished
+- **WHEN** a book's `isFinished` is set to `true`
+- **THEN** its status is `finished`
 - **AND** it appears in the Finished section of the dashboard
+- **AND** it does NOT appear under any session-start entry point
 
 ### Requirement: Read-only library queries
 
-The system SHALL expose a read-only mechanism to list books filtered by derived status (in-progress, finished). The query SHALL be SwiftUI-observable so dashboard sections update automatically when underlying data changes.
+The system SHALL expose a read-only mechanism to list books filtered by derived status (in-progress, finished) and by attitude (entertainment, study). Queries SHALL be SwiftUI-observable so dashboard sections update automatically when underlying data changes. The in-progress queries SHALL be sorted most-recently-added first (`dateAdded DESC`) so the For fun / To study entry points consistently surface the newest book of that attitude.
 
 #### Scenario: Adding a book updates the dashboard
 
 - **WHEN** a book is inserted into the persistence layer while the dashboard is on screen
-- **THEN** the Reading Now section updates to include the new book without an explicit refresh action
+- **THEN** the relevant entry point updates without an explicit refresh action
+
+#### Scenario: Most-recently-added book sorts first
+
+- **WHEN** the user has three study books with `dateAdded` of yesterday, two days ago, and today
+- **THEN** the in-progress study query returns today's book first
 
 ### Requirement: Cover placeholder fallback
 
@@ -61,10 +71,10 @@ When a book has no cover-image reference, the UI SHALL render a neutral placehol
 
 The library SHALL accept new `Book` rows inserted by other capabilities — currently `book-search`. Inserted books SHALL be observable by the existing read-only library queries (in-progress / finished) without any additional refresh action by the caller.
 
-#### Scenario: Inserted book appears in Reading Now
+#### Scenario: Inserted book appears in dashboard
 
-- **WHEN** another capability inserts a new `Book` with `currentPage = 0`
-- **THEN** the book appears in the Reading Now section of the dashboard immediately
+- **WHEN** another capability inserts a new `Book` with `isFinished = false`
+- **THEN** the book appears under the relevant attitude entry point on the dashboard immediately
 - **AND** the in-progress query result updates without an explicit refresh
 
 ### Requirement: Cover render fallback order
@@ -88,3 +98,18 @@ The cover-rendering layer SHALL prefer `coverImageURL` when non-nil, fall back t
 - **THEN** the neutral placeholder is shown
 - **AND** `coverAssetName` is not used as a secondary fallback
 
+### Requirement: Mark book as finished
+
+The system SHALL expose a write operation that marks a `Book` as finished by setting `isFinished = true` and `finishedAt = Date.now`. The "Book is finished" button on the session timer screen SHALL invoke this operation as part of the session-stop transition (see `reading-session` spec).
+
+#### Scenario: Mark finished writes both fields
+
+- **WHEN** the mark-finished operation is invoked on a `Book`
+- **THEN** the book's `isFinished` becomes `true`
+- **AND** the book's `finishedAt` is set to the current moment
+
+#### Scenario: Already-finished book is idempotent
+
+- **WHEN** the mark-finished operation is invoked on a `Book` that is already finished
+- **THEN** the book remains finished
+- **AND** `finishedAt` retains its prior value (the original finish time is preserved)

@@ -1,73 +1,48 @@
 import SwiftUI
 
 struct RetrospectiveView: View {
-    let onSubmit: (_ start: Int, _ focus: Int, _ enjoyment: Int) -> Void
-
-    @State private var startDifficulty: Int?
-    @State private var focusDifficulty: Int?
-    @State private var enjoyment: Int?
+    let onSubmit: (_ focusDifficulty: Int) -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
-                    Text("How was the session?")
-                        .font(Theme.Typography.displaySm)
-                        .foregroundStyle(Theme.Palette.ink)
-                    ratingRow(label: "How hard was it to start today?", selection: $startDifficulty)
-                    ratingRow(label: "How hard was it to focus?", selection: $focusDifficulty)
-                    ratingRow(label: "How much did you enjoy it?", selection: $enjoyment)
-                }
-                .padding(Theme.Spacing.lg)
+        VStack(spacing: Theme.Spacing.xl) {
+            Spacer()
+            VStack(spacing: Theme.Spacing.sm) {
+                Text("How hard was it to focus?")
+                    .font(Theme.Typography.displaySm)
+                    .foregroundStyle(Theme.Palette.ink)
+                    .multilineTextAlignment(.center)
+                Text("Tap a number — 1 is easy, 5 is brutal.")
+                    .font(Theme.Typography.bodySm)
+                    .foregroundStyle(Theme.Palette.muted)
             }
-            Button(action: submit) {
-                Text("Continue")
-                    .font(Theme.Typography.buttonMd)
-                    .foregroundStyle(Theme.Palette.canvas)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 48)
-                    .background(canSubmit ? Theme.Palette.rausch : Theme.Palette.rausch.opacity(0.3))
-                    .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.button))
-            }
-            .disabled(!canSubmit)
-            .padding(Theme.Spacing.lg)
-        }
-        .background(Theme.Palette.canvas)
-    }
+            .padding(.horizontal, Theme.Spacing.lg)
 
-    private var canSubmit: Bool {
-        startDifficulty != nil && focusDifficulty != nil && enjoyment != nil
-    }
-
-    private func ratingRow(label: String, selection: Binding<Int?>) -> some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text(label)
-                .font(Theme.Typography.titleSm)
-                .foregroundStyle(Theme.Palette.ink)
-            HStack(spacing: Theme.Spacing.xs) {
+            HStack(spacing: Theme.Spacing.sm) {
                 ForEach(1...5, id: \.self) { value in
                     Button {
-                        selection.wrappedValue = value
+                        onSubmit(value)
                     } label: {
                         Text("\(value)")
-                            .font(Theme.Typography.buttonMd)
-                            .foregroundStyle(selection.wrappedValue == value
-                                ? Theme.Palette.canvas
-                                : Theme.Palette.ink)
+                            .font(Theme.Typography.displaySm)
+                            .foregroundStyle(Theme.Palette.ink)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 48)
-                            .background(selection.wrappedValue == value
-                                ? Theme.Palette.rausch
-                                : Theme.Palette.surfaceSoft)
+                            .frame(height: 64)
+                            .background(Theme.Palette.surfaceSoft)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: Theme.Radius.button)
+                                    .stroke(Theme.Palette.hairlineSoft, lineWidth: 1)
+                            )
                             .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.button))
                     }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Focus difficulty \(value)")
                 }
             }
-        }
-    }
+            .padding(.horizontal, Theme.Spacing.lg)
 
-    private func submit() {
-        guard let s = startDifficulty, let f = focusDifficulty, let e = enjoyment else { return }
-        onSubmit(s, f, e)
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Theme.Palette.canvas)
     }
 }

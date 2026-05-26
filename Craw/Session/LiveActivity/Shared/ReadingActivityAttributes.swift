@@ -11,12 +11,10 @@ struct ReadingActivityAttributes: ActivityAttributes {
         var phase: ReadingActivityPhase
         var accumulatedElapsedSeconds: Int
         var lastResumeAt: Date?
-        var currentPage: Int
     }
 
     let bookID: UUID
     let bookTitle: String
     let bookAuthor: String
-    let totalPages: Int
     let startedAt: Date
 }

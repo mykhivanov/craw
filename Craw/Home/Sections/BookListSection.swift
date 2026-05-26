@@ -1,98 +1,54 @@
 import SwiftUI
 
-struct BookListSection: View {
-    let title: String
+struct FinishedSection: View {
     let books: [Book]
-    let showsAddButton: Bool
-    let onAddTapped: (() -> Void)?
-    let emptyContent: (() -> AnyView)?
-
-    init(
-        title: String,
-        books: [Book],
-        showsAddButton: Bool,
-        onAddTapped: (() -> Void)? = nil,
-        emptyContent: (() -> AnyView)? = nil
-    ) {
-        self.title = title
-        self.books = books
-        self.showsAddButton = showsAddButton
-        self.onAddTapped = onAddTapped
-        self.emptyContent = emptyContent
-    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-            header
-            if books.isEmpty {
-                emptyContent?()
-            } else {
-                VStack(spacing: Theme.Spacing.sm) {
+        if books.isEmpty {
+            EmptyView()
+        } else {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                Text("Finished")
+                    .font(Theme.Typography.titleSm)
+                    .foregroundStyle(Theme.Palette.muted)
+                    .textCase(.uppercase)
+                    .padding(.horizontal, Theme.Spacing.xxs)
+
+                VStack(spacing: Theme.Spacing.xs) {
                     ForEach(books) { book in
-                        NavigationLink(value: book) {
-                            BookRow(book: book)
-                        }
-                        .buttonStyle(.plain)
+                        FinishedListRow(book: book)
                     }
                 }
             }
         }
     }
-
-    private var header: some View {
-        HStack {
-            Text(title)
-                .font(Theme.Typography.displaySm)
-                .foregroundStyle(Theme.Palette.ink)
-            Spacer()
-            if showsAddButton {
-                Button {
-                    onAddTapped?()
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(Theme.Palette.ink)
-                        .frame(width: 32, height: 32)
-                        .background(Theme.Palette.surfaceStrong, in: Circle())
-                }
-                .accessibilityLabel("Add book")
-            }
-        }
-    }
 }
 
-struct BookRow: View {
+/// Standard button-height row for the Finished section. Tap is a no-op in this change —
+/// per spec, the row exists as a visual shelf only. Wrapped as a `Button` so accessibility
+/// users still hear it as a button-like element, but with an empty action.
+struct FinishedListRow: View {
     let book: Book
 
     var body: some View {
-        HStack(spacing: Theme.Spacing.md) {
-            CoverPlaceholder(coverAssetName: book.coverAssetName, coverImageURL: book.coverImageURL)
-                .frame(width: 52, height: 72)
-                .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.button))
-            VStack(alignment: .leading, spacing: 2) {
+        Button(action: {}) {
+            HStack(spacing: Theme.Spacing.md) {
                 Text(book.title)
-                    .font(Theme.Typography.titleMd)
+                    .font(Theme.Typography.bodyMd)
                     .foregroundStyle(Theme.Palette.ink)
-                    .lineLimit(2)
-                Text(book.author)
-                    .font(Theme.Typography.bodySm)
-                    .foregroundStyle(Theme.Palette.muted)
                     .lineLimit(1)
-                if book.status != .finished {
-                    ProgressBar(progress: book.progressFraction)
-                        .frame(height: 4)
-                        .padding(.top, Theme.Spacing.xs)
-                }
+                Spacer(minLength: 0)
+                Image(systemName: "checkmark")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Theme.Palette.muted)
             }
-            Spacer(minLength: 0)
+            .padding(.horizontal, Theme.Spacing.base)
+            .frame(height: 48)
+            .background(Theme.Palette.surfaceSoft)
+            .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.button))
         }
-        .padding(Theme.Spacing.sm)
-        .background(Theme.Palette.surfaceCard)
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Radius.card)
-                .stroke(Theme.Palette.hairlineSoft, lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card))
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(book.title) — finished")
     }
 }
 
@@ -131,21 +87,5 @@ struct CoverPlaceholder: View {
         Image(systemName: "book.closed")
             .font(.system(size: 18, weight: .regular))
             .foregroundStyle(Theme.Palette.mutedSoft)
-    }
-}
-
-private struct ProgressBar: View {
-    let progress: Double
-
-    var body: some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(Theme.Palette.hairlineSoft)
-                Capsule()
-                    .fill(Theme.Palette.rausch)
-                    .frame(width: proxy.size.width * max(0, min(1, progress)))
-            }
-        }
     }
 }

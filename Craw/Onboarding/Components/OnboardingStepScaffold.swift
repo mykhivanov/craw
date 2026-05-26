@@ -53,9 +53,9 @@ struct OnboardingStepScaffold<Content: View>: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             if !eyebrow.isEmpty {
                 Text(eyebrow.uppercased())
-                .font(Theme.Typography.microLabel)
-                .foregroundStyle(Theme.Palette.rausch)
-                .tracking(0.6)
+                    .font(Theme.Typography.microLabel)
+                    .foregroundStyle(Theme.Palette.rausch)
+                    .tracking(0.6)
             }
 
             if !title.isEmpty {

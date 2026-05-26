@@ -110,3 +110,65 @@ struct APIDeviceRegistration: Encodable {
         case locale
     }
 }
+
+// MARK: - Quiz
+
+struct APIQuizSectionsRequest: Encodable {
+    let bookName: String
+
+    enum CodingKeys: String, CodingKey {
+        case bookName = "book_name"
+    }
+}
+
+struct APIQuizQuestionsRequestWithSection: Encodable {
+    let bookName: String
+    let sectionOrPage: String
+
+    enum CodingKeys: String, CodingKey {
+        case bookName = "book_name"
+        case sectionOrPage = "section_or_page"
+    }
+}
+
+struct APIQuizQuestionsRequestFinished: Encodable {
+    let bookName: String
+    let finished: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case bookName = "book_name"
+        case finished
+    }
+}
+
+struct APIQuizQuestion: Decodable, Equatable {
+    let question: String
+    let options: [String]
+}
+
+/// `section_or_page` is omitted from the wire when nil so the server can distinguish
+/// the book-finished path (no selection) from a normal section/page submission.
+struct APIQuizGradeRequest: Encodable {
+    let bookName: String
+    let sectionOrPage: String?
+    let answers: [String]
+
+    enum CodingKeys: String, CodingKey {
+        case bookName = "book_name"
+        case sectionOrPage = "section_or_page"
+        case answers
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(bookName, forKey: .bookName)
+        if let sectionOrPage {
+            try container.encode(sectionOrPage, forKey: .sectionOrPage)
+        }
+        try container.encode(answers, forKey: .answers)
+    }
+}
+
+struct APIQuizGrade: Decodable, Equatable {
+    let mark: Int
+}

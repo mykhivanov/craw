@@ -1,16 +1,19 @@
 # home-dashboard Specification
 
 ## Purpose
-TBD - created by archiving change add-home-dashboard. Update Purpose after archive.
+
+The Home tab is the first surface a returning user lands on. Its job is twofold: give a glanceable sense of recent reading activity (greeting, week strip, stat cards) and provide the fastest possible path back into a reading session. After the redesign-reading-session-flow change, three explicit session-start entry points (For fun, To study, All currently reading) replace the prior detail-screen indirection — tapping a tile on Home starts a session in one tap.
+
 ## Requirements
+
 ### Requirement: Vertically scrolling single-feed layout
 
-The Home tab SHALL present its content as a single vertically scrolling feed. The feed sections SHALL appear in this order from top to bottom: greeting, live counter, 7-day calendar strip, stat cards row, Reading Now, Finished.
+The Home tab SHALL present its content as a single vertically scrolling feed. The feed sections SHALL appear in this order from top to bottom: greeting, live counter, 7-day calendar strip, stat cards row, three session-start entry points (For fun, To study, All currently reading), Quote of the Day, Finished.
 
 #### Scenario: Section ordering
 
 - **WHEN** the user views the Home tab with content present
-- **THEN** the sections are rendered in the order: greeting, live counter, 7-day strip, stat cards, Reading Now, Finished
+- **THEN** the sections are rendered in the order: greeting, live counter, 7-day strip, stat cards, For fun entry, To study entry, All currently reading entry, Quote of the Day, Finished
 
 ### Requirement: Time-of-day greeting
 
@@ -66,24 +69,24 @@ The strip SHALL render exactly seven day cells representing the last seven local
 - **WHEN** a given day has zero minutes logged
 - **THEN** that day's ring renders as an unfilled outline
 
-### Requirement: Today's pages stat card
+### Requirement: Today's minutes stat card
 
-A stat card SHALL show the count of pages read today and the percentage change versus yesterday. A trend-direction arrow SHALL accompany the percentage: up arrow for positive change, down arrow for negative change, neutral indicator when change is zero or yesterday's value was zero.
+A stat card SHALL show the count of minutes read today and the percentage change versus yesterday. A trend-direction arrow SHALL accompany the percentage: up arrow for positive change, down arrow for negative change, neutral indicator when change is zero or yesterday's value was zero.
 
 #### Scenario: Positive day-over-day change
 
-- **WHEN** today has 30 pages and yesterday had 20 pages
-- **THEN** the card shows "30" pages with "+50%" and an up arrow
+- **WHEN** today has 30 minutes and yesterday had 20 minutes
+- **THEN** the card shows "30" minutes with "+50%" and an up arrow
 
 #### Scenario: Negative day-over-day change
 
-- **WHEN** today has 10 pages and yesterday had 20 pages
-- **THEN** the card shows "10" pages with "-50%" and a down arrow
+- **WHEN** today has 10 minutes and yesterday had 20 minutes
+- **THEN** the card shows "10" minutes with "-50%" and a down arrow
 
 #### Scenario: Yesterday had no reading
 
-- **WHEN** yesterday had 0 pages and today has any non-zero value
-- **THEN** the card shows today's page count with a neutral indicator and no percentage
+- **WHEN** yesterday had 0 minutes and today has any non-zero value
+- **THEN** the card shows today's minute count with a neutral indicator and no percentage
 
 ### Requirement: Streak stat card
 
@@ -126,58 +129,92 @@ The transition between the two treatments SHALL be deterministic on streak lengt
 - **THEN** the streak card reverts to the single-metric treatment showing "1 day"
 - **AND** no current-week visualization is rendered
 
-### Requirement: Reading Now section
+### Requirement: For fun session-start entry
 
-The dashboard SHALL render a "Reading Now" section listing every book currently in progress. Each row SHALL display the book's cover (or a placeholder when no cover is set), title, author, and a progress bar representing pages-read / total-pages. The section header SHALL contain an add-book affordance.
+The dashboard SHALL render a "For fun" entry point that, when at least one in-progress book of attitude `.entertainment` exists, displays the most-recently-added such book and starts a reading session for that book on tap. When zero such books exist, the entry renders the "Add a book for fun" placeholder defined under "Empty states".
 
-#### Scenario: Multiple in-progress books
+#### Scenario: One for-fun book
 
-- **WHEN** the user has two in-progress books
-- **THEN** the Reading Now section lists both books
-- **AND** each row shows cover, title, author, and a progress bar
+- **WHEN** the user has exactly one in-progress for-fun book and taps the For fun entry
+- **THEN** a reading session is started for that book
+- **AND** no detail screen is shown
 
-#### Scenario: Add-book affordance is present
+#### Scenario: Multiple for-fun books
 
-- **WHEN** the user views the Reading Now section
-- **THEN** the section header contains an add-book button
+- **WHEN** the user has three in-progress for-fun books and taps the For fun entry
+- **THEN** a reading session is started for the most-recently-added of the three
+- **AND** the other two for-fun books are reachable through the "All currently reading" entry point
+
+### Requirement: To study session-start entry
+
+The dashboard SHALL render a "To study" entry point that, when at least one in-progress book of attitude `.study` exists, displays the most-recently-added such book and starts a reading session for that book on tap. When zero such books exist, the entry renders the "Add a book to study" placeholder defined under "Empty states".
+
+#### Scenario: One study book
+
+- **WHEN** the user has exactly one in-progress study book and taps the To study entry
+- **THEN** a reading session is started for that book
+
+#### Scenario: Multiple study books
+
+- **WHEN** the user has two in-progress study books and taps the To study entry
+- **THEN** a reading session is started for the most-recently-added of the two
+
+### Requirement: All currently reading session-start entry
+
+The dashboard SHALL render an "All currently reading" entry point that pushes a list of every in-progress book (regardless of attitude), ordered most-recently-added first. The pushed view SHALL allow tapping any row to start a reading session for that book. The pushed view SHALL also contain an explicit "+ Add a book" row that opens book search WITHOUT preselecting an attitude; the user SHALL be required to pick an attitude as part of adding the book.
+
+#### Scenario: Tap a row starts a session
+
+- **WHEN** the user opens "All currently reading" and taps a book row
+- **THEN** a reading session is started for that book
+
+#### Scenario: Add a book from the list prompts attitude
+
+- **WHEN** the user taps "+ Add a book" inside the "All currently reading" view
+- **THEN** book search opens with no attitude preselected
+- **AND** the user is required to choose `.entertainment` or `.study` before the book can be saved
 
 ### Requirement: Finished section
 
-The dashboard SHALL render a "Finished" section listing every book whose status is finished. Each row SHALL display the book's cover, title, and author. The section SHALL be hidden entirely when no finished books exist.
+The dashboard SHALL render a "Finished" section listing every book whose `isFinished` flag is true. Each row SHALL be rendered at the design system's standard button height, displaying the book's title (single line). The section SHALL be hidden entirely when no finished books exist. Tapping a Finished row SHALL be a no-op — no detail navigation, no menu, no other affordance.
 
 #### Scenario: Finished books exist
 
 - **WHEN** the user has at least one finished book
-- **THEN** the Finished section is visible and lists each finished book
+- **THEN** the Finished section is visible
+- **AND** each row is rendered at standard button height with the book's title
 
 #### Scenario: No finished books
 
 - **WHEN** the user has zero finished books
 - **THEN** the Finished section is not rendered
 
+#### Scenario: Tapping a finished row does nothing
+
+- **WHEN** the user taps a row in the Finished section
+- **THEN** no navigation is pushed
+- **AND** no sheet or menu is presented
+
 ### Requirement: Empty states
 
 The dashboard SHALL render dedicated empty states when content is absent:
-- When zero books exist in total, a top-level empty state SHALL replace both Reading Now and Finished sections, inviting the user to add their first book.
-- When books exist but none are in-progress, the Reading Now section SHALL display a "nothing on your nightstand" empty message that still contains the add-book affordance.
+- When zero books exist in total, a top-level empty state SHALL replace the three entry-point sections and the Finished section, inviting the user to add their first book.
+- When the user has zero books of attitude `.entertainment`, the For fun entry SHALL render an "Add a book for fun" placeholder that, when tapped, opens book search with attitude preset to `.entertainment`.
+- When the user has zero books of attitude `.study`, the To study entry SHALL render an "Add a book to study" placeholder that, when tapped, opens book search with attitude preset to `.study`.
+- These attitude-preset placeholders SHALL NOT appear once at least one book of the corresponding attitude exists.
 
 #### Scenario: First-launch empty state
 
 - **WHEN** the user opens the app and the library contains zero books
-- **THEN** the dashboard shows an empty-state prompt to add the first book in place of the Reading Now and Finished sections
+- **THEN** the dashboard shows an empty-state prompt to add the first book in place of the three entry-point sections and the Finished section
 
-#### Scenario: Library has only finished books
+#### Scenario: Has study but no for-fun book
 
-- **WHEN** the user has one or more finished books and zero in-progress books
-- **THEN** the Reading Now section shows an empty-state message
-- **AND** the Finished section renders normally
+- **WHEN** the user has one in-progress study book and zero for-fun books
+- **THEN** the For fun entry shows the attitude-preset "Add a book for fun" placeholder
+- **AND** the To study entry shows the existing study book as a session-start CTA
 
-### Requirement: Tappable book rows route to detail
+#### Scenario: Placeholders disappear once filled
 
-Tapping a row in either Reading Now or Finished SHALL push a book-detail destination onto the Home tab's navigation stack. The detail view's full content is owned by a later change; this change SHALL render a minimal detail placeholder showing the book's title.
-
-#### Scenario: Tap on in-progress book
-
-- **WHEN** the user taps a book row in Reading Now
-- **THEN** a detail view for that book is pushed onto the Home navigation stack
-
+- **WHEN** the user adds a for-fun book via the "Add a book for fun" placeholder
+- **THEN** the For fun entry replaces the placeholder with the new book as a session-start CTA

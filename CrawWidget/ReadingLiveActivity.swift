@@ -57,22 +57,15 @@ private struct LockScreenView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(context.attributes.bookTitle)
-                        .font(.headline)
-                        .foregroundStyle(LiveActivityPalette.ink)
-                        .lineLimit(1)
-                    Text(context.attributes.bookAuthor)
-                        .font(.caption)
-                        .foregroundStyle(LiveActivityPalette.muted)
-                        .lineLimit(1)
-                }
-                Spacer()
-                Text("p. \(context.state.currentPage) / \(context.attributes.totalPages)")
+            VStack(alignment: .leading, spacing: 2) {
+                Text(context.attributes.bookTitle)
+                    .font(.headline)
+                    .foregroundStyle(LiveActivityPalette.ink)
+                    .lineLimit(1)
+                Text(context.attributes.bookAuthor)
                     .font(.caption)
                     .foregroundStyle(LiveActivityPalette.muted)
-                    .monospacedDigit()
+                    .lineLimit(1)
             }
 
             HStack {

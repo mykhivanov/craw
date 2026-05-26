@@ -23,25 +23,24 @@ struct SessionEngineTests {
         }
     }
 
-    private func makeBook(startingPage: Int = 40, totalPages: Int = 300) -> Book {
-        Book(title: "Sample", author: "Author", totalPages: totalPages, currentPage: startingPage)
+    private func makeBook(totalPages: Int = 300) -> Book {
+        Book(title: "Sample", author: "Author", totalPages: totalPages, attitude: .study)
     }
 
-    @Test("Start → stop with page advance reports correct pagesRead")
-    func startStopAdvance() {
+    @Test("Start → stop reports correct elapsed seconds")
+    func startStop() {
         let cache = SpyCache()
         let engine = SessionEngine(cache: cache)
-        let book = makeBook(startingPage: 40, totalPages: 300)
+        let book = makeBook()
         let t0 = Date(timeIntervalSince1970: 1_000_000)
         let t1 = t0.addingTimeInterval(20 * 60)
 
         engine.start(book: book, now: t0)
-        engine.setCurrentPage(67)
         engine.stop(now: t1)
 
         #expect(engine.state == .stopped)
-        #expect(engine.pagesRead == 27)
         #expect(engine.elapsedSeconds == 20 * 60)
+        #expect(engine.endedAsBookFinished == false)
     }
 
     @Test("Pause/resume excludes paused time from elapsedSeconds")
@@ -78,21 +77,14 @@ struct SessionEngineTests {
         #expect(engine.elapsedSeconds == 120)
     }
 
-    @Test("setCurrentPage cannot go below starting page or above totalPages")
-    func pageClamping() {
+    @Test("Stop with asBookFinished flag is recorded on the engine")
+    func stopAsBookFinishedFlag() {
         let cache = SpyCache()
         let engine = SessionEngine(cache: cache)
-        let book = makeBook(startingPage: 50, totalPages: 200)
+        let book = makeBook()
         engine.start(book: book)
-
-        engine.setCurrentPage(10)
-        #expect(engine.currentPage == 50)
-
-        engine.setCurrentPage(500)
-        #expect(engine.currentPage == 200)
-
-        engine.setCurrentPage(120)
-        #expect(engine.currentPage == 120)
+        engine.stop(asBookFinished: true)
+        #expect(engine.endedAsBookFinished == true)
     }
 
     @Test("Every state transition writes a snapshot")
@@ -123,28 +115,24 @@ struct SessionEngineTests {
         engine.finish()
         #expect(engine.state == .idle)
         #expect(engine.book == nil)
+        #expect(engine.endedAsBookFinished == false)
         #expect(cache.clearCount == 1)
     }
 
-    @Test("Restore from running snapshot preserves accumulated time and starting page")
+    @Test("Restore from running snapshot preserves accumulated time")
     func restoreRunning() {
         let cache = SpyCache()
         let engine = SessionEngine(cache: cache)
-        let book = makeBook(startingPage: 100, totalPages: 400)
+        let book = makeBook(totalPages: 400)
         let snapshot = ActiveSessionSnapshot(
             bookID: book.id,
             startedAt: Date(timeIntervalSince1970: 5_000_000),
             accumulatedElapsedSeconds: 450,
-            startingPage: 100,
-            currentPage: 130,
             isPaused: false,
             lastCheckpointAt: Date(timeIntervalSince1970: 5_000_450)
         )
         engine.restore(from: snapshot, book: book, now: Date(timeIntervalSince1970: 5_100_000))
         #expect(engine.state == .running)
         #expect(engine.accumulatedElapsedSeconds == 450)
-        #expect(engine.startingPage == 100)
-        #expect(engine.currentPage == 130)
-        #expect(engine.pagesRead == 30)
     }
 }

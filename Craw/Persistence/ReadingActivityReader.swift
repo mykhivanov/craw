@@ -4,18 +4,17 @@ enum ReadingActivityReader {
     struct DayMetrics: Equatable {
         let date: Date
         let minutesRead: Int
-        let pagesRead: Int
     }
 
-    enum PagesDeltaKind: Equatable {
+    enum MinutesDeltaKind: Equatable {
         case unchangedZero
         case increaseFromZero
         case percentChange(Double)
     }
 
-    struct PagesDelta: Equatable {
-        let todayPages: Int
-        let kind: PagesDeltaKind
+    struct MinutesDelta: Equatable {
+        let todayMinutes: Int
+        let kind: MinutesDeltaKind
     }
 
     struct CalendarWeekDay: Equatable {
@@ -34,8 +33,7 @@ enum ReadingActivityReader {
         let row = days.first { $0.date == key }
         return DayMetrics(
             date: key,
-            minutesRead: row?.minutesRead ?? 0,
-            pagesRead: row?.pagesRead ?? 0
+            minutesRead: row?.minutesRead ?? 0
         )
     }
 
@@ -52,30 +50,29 @@ enum ReadingActivityReader {
             let row = days.first { $0.date == date }
             return DayMetrics(
                 date: date,
-                minutesRead: row?.minutesRead ?? 0,
-                pagesRead: row?.pagesRead ?? 0
+                minutesRead: row?.minutesRead ?? 0
             )
         }
     }
 
-    static func pagesDeltaVsYesterday(
+    static func minutesDeltaVsYesterday(
         from days: [ReadingDay],
         now: Date = .now,
         calendar: Calendar = .autoupdatingCurrent
-    ) -> PagesDelta {
+    ) -> MinutesDelta {
         let today = calendar.startOfDay(for: now)
         let yesterday = calendar.date(byAdding: .day, value: -1, to: today) ?? today
-        let todayPages = days.first(where: { $0.date == today })?.pagesRead ?? 0
-        let yesterdayPages = days.first(where: { $0.date == yesterday })?.pagesRead ?? 0
+        let todayMinutes = days.first(where: { $0.date == today })?.minutesRead ?? 0
+        let yesterdayMinutes = days.first(where: { $0.date == yesterday })?.minutesRead ?? 0
 
-        if yesterdayPages == 0, todayPages == 0 {
-            return PagesDelta(todayPages: 0, kind: .unchangedZero)
+        if yesterdayMinutes == 0, todayMinutes == 0 {
+            return MinutesDelta(todayMinutes: 0, kind: .unchangedZero)
         }
-        if yesterdayPages == 0 {
-            return PagesDelta(todayPages: todayPages, kind: .increaseFromZero)
+        if yesterdayMinutes == 0 {
+            return MinutesDelta(todayMinutes: todayMinutes, kind: .increaseFromZero)
         }
-        let pct = (Double(todayPages - yesterdayPages) / Double(yesterdayPages)) * 100.0
-        return PagesDelta(todayPages: todayPages, kind: .percentChange(pct))
+        let pct = (Double(todayMinutes - yesterdayMinutes) / Double(yesterdayMinutes)) * 100.0
+        return MinutesDelta(todayMinutes: todayMinutes, kind: .percentChange(pct))
     }
 
     static func currentStreak(
@@ -105,37 +102,6 @@ enum ReadingActivityReader {
             cursor = next
         }
         return streak
-    }
-
-    /// Count of distinct local-calendar days within the most recent 7 days inclusive of today
-    /// where at least one session ending on that day has `startDifficulty >= 4`
-    /// OR `focusDifficulty >= 4`. Joins `[ReadingSession]` to `[SessionRetrospective]` by `sessionID`.
-    static func hardDaysInLastSevenDays(
-        sessions: [ReadingSession],
-        retrospectives: [SessionRetrospective],
-        now: Date = .now,
-        calendar: Calendar = .autoupdatingCurrent
-    ) -> Int {
-        let today = calendar.startOfDay(for: now)
-        let retroBySession = Dictionary(
-            grouping: retrospectives,
-            by: \.sessionID
-        ).compactMapValues(\.first)
-
-        var hardDays: Set<Date> = []
-        for session in sessions {
-            let dayStart = calendar.startOfDay(for: session.endedAt)
-            guard let daysAgo = calendar.dateComponents([.day], from: dayStart, to: today).day,
-                  (0..<7).contains(daysAgo)
-            else {
-                continue
-            }
-            guard let retro = retroBySession[session.id] else { continue }
-            if retro.startDifficulty >= 4 || retro.focusDifficulty >= 4 {
-                hardDays.insert(dayStart)
-            }
-        }
-        return hardDays.count
     }
 
     static func currentCalendarWeek(

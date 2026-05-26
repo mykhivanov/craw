@@ -19,22 +19,22 @@ struct ReadingActivityReaderTests {
         return calendar.date(from: components)!
     }
 
-    private func day(_ date: Date, minutes: Int = 0, pages: Int = 0) -> ReadingDay {
-        ReadingDay(date: date, minutesRead: minutes, pagesRead: pages)
+    private func day(_ date: Date, minutes: Int = 0) -> ReadingDay {
+        ReadingDay(date: date, minutesRead: minutes)
     }
 
     @Test("Positive day-over-day percentage change")
-    func positivePagesChange() {
+    func positiveMinutesChange() {
         let today = date(2026, 5, 24)
         let yesterday = date(2026, 5, 23)
         let days = [
-            day(today, pages: 30),
-            day(yesterday, pages: 20)
+            day(today, minutes: 30),
+            day(yesterday, minutes: 20)
         ]
-        let result = ReadingActivityReader.pagesDeltaVsYesterday(
+        let result = ReadingActivityReader.minutesDeltaVsYesterday(
             from: days, now: today, calendar: calendar
         )
-        #expect(result.todayPages == 30)
+        #expect(result.todayMinutes == 30)
         guard case let .percentChange(pct) = result.kind else {
             Issue.record("Expected .percentChange, got \(result.kind)")
             return
@@ -43,17 +43,17 @@ struct ReadingActivityReaderTests {
     }
 
     @Test("Negative day-over-day percentage change")
-    func negativePagesChange() {
+    func negativeMinutesChange() {
         let today = date(2026, 5, 24)
         let yesterday = date(2026, 5, 23)
         let days = [
-            day(today, pages: 10),
-            day(yesterday, pages: 20)
+            day(today, minutes: 10),
+            day(yesterday, minutes: 20)
         ]
-        let result = ReadingActivityReader.pagesDeltaVsYesterday(
+        let result = ReadingActivityReader.minutesDeltaVsYesterday(
             from: days, now: today, calendar: calendar
         )
-        #expect(result.todayPages == 10)
+        #expect(result.todayMinutes == 10)
         guard case let .percentChange(pct) = result.kind else {
             Issue.record("Expected .percentChange")
             return
@@ -66,23 +66,23 @@ struct ReadingActivityReaderTests {
         let today = date(2026, 5, 24)
         let yesterday = date(2026, 5, 23)
         let days = [
-            day(today, pages: 15),
-            day(yesterday, pages: 0)
+            day(today, minutes: 15),
+            day(yesterday, minutes: 0)
         ]
-        let result = ReadingActivityReader.pagesDeltaVsYesterday(
+        let result = ReadingActivityReader.minutesDeltaVsYesterday(
             from: days, now: today, calendar: calendar
         )
-        #expect(result.todayPages == 15)
+        #expect(result.todayMinutes == 15)
         #expect(result.kind == .increaseFromZero)
     }
 
     @Test("Both days zero produces unchangedZero kind")
     func bothZero() {
         let today = date(2026, 5, 24)
-        let result = ReadingActivityReader.pagesDeltaVsYesterday(
+        let result = ReadingActivityReader.minutesDeltaVsYesterday(
             from: [], now: today, calendar: calendar
         )
-        #expect(result.todayPages == 0)
+        #expect(result.todayMinutes == 0)
         #expect(result.kind == .unchangedZero)
     }
 
@@ -176,15 +176,15 @@ struct ReadingActivityReaderTests {
         let twoDaysAgo = try #require(calendar.date(byAdding: .day, value: -2, to: today))
         let fiveDaysAgo = try #require(calendar.date(byAdding: .day, value: -5, to: today))
         let days = [
-            day(twoDaysAgo, minutes: 30, pages: 10),
-            day(fiveDaysAgo, minutes: 45, pages: 12)
+            day(twoDaysAgo, minutes: 30),
+            day(fiveDaysAgo, minutes: 45)
         ]
         let result = ReadingActivityReader.lastSevenDays(
             from: days, now: today, calendar: calendar
         )
         #expect(result.count == 7)
         #expect(result.last?.date == today)
-        let nonZero = result.filter { $0.minutesRead > 0 || $0.pagesRead > 0 }
+        let nonZero = result.filter { $0.minutesRead > 0 }
         #expect(nonZero.count == 2)
     }
 }

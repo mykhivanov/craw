@@ -13,8 +13,8 @@ struct StatCardsSection: View {
         ReadingActivityReader.today(from: days)
     }
 
-    private var pagesDelta: ReadingActivityReader.PagesDelta {
-        ReadingActivityReader.pagesDeltaVsYesterday(from: days)
+    private var minutesDelta: ReadingActivityReader.MinutesDelta {
+        ReadingActivityReader.minutesDeltaVsYesterday(from: days)
     }
 
     private var streak: Int {
@@ -27,7 +27,7 @@ struct StatCardsSection: View {
 
     var body: some View {
         HStack(spacing: Theme.Spacing.md) {
-            TodaysPagesCard(metrics: todayMetrics, delta: pagesDelta)
+            TodaysMinutesCard(metrics: todayMetrics, delta: minutesDelta)
             StreakCard(
                 streak: streak,
                 calendarWeek: calendarWeek,
@@ -57,9 +57,9 @@ private extension View {
     }
 }
 
-struct TodaysPagesCard: View {
+struct TodaysMinutesCard: View {
     let metrics: ReadingActivityReader.DayMetrics
-    let delta: ReadingActivityReader.PagesDelta
+    let delta: ReadingActivityReader.MinutesDelta
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
@@ -67,10 +67,10 @@ struct TodaysPagesCard: View {
                 .font(Theme.Typography.captionSm)
                 .foregroundStyle(Theme.Palette.muted)
             HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.xs) {
-                Text("\(metrics.pagesRead)")
+                Text("\(metrics.minutesRead)")
                     .font(Theme.Typography.displaySm)
                     .foregroundStyle(Theme.Palette.ink)
-                Text("pages")
+                Text("min")
                     .font(Theme.Typography.bodySm)
                     .foregroundStyle(Theme.Palette.muted)
             }
@@ -138,35 +138,4 @@ struct StreakCard: View {
         }
         .crawCard()
     }
-}
-
-#Preview("Streak card — both regimes") {
-    let calendar = Calendar.autoupdatingCurrent
-    let today = calendar.startOfDay(for: .now)
-    let week = (0..<7).compactMap { offset -> ReadingActivityReader.CalendarWeekDay? in
-        guard let date = calendar.date(byAdding: .day, value: -offset, to: today) else { return nil }
-        return ReadingActivityReader.CalendarWeekDay(
-            date: date,
-            weekdaySymbol: ["S", "M", "T", "W", "T", "F", "S"][offset],
-            hasActivity: offset % 2 == 0,
-            isToday: offset == 0
-        )
-    }
-    return VStack(spacing: 16) {
-        HStack(spacing: 12) {
-            TodaysPagesCard(
-                metrics: .init(date: today, minutesRead: 45, pagesRead: 30),
-                delta: .init(todayPages: 30, kind: .percentChange(50))
-            )
-            StreakCard(streak: 3, calendarWeek: week, threshold: 7)
-        }
-        HStack(spacing: 12) {
-            TodaysPagesCard(
-                metrics: .init(date: today, minutesRead: 60, pagesRead: 22),
-                delta: .init(todayPages: 22, kind: .increaseFromZero)
-            )
-            StreakCard(streak: 12, calendarWeek: week, threshold: 7)
-        }
-    }
-    .padding()
 }

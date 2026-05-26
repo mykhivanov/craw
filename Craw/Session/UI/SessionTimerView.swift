@@ -4,9 +4,10 @@ import SwiftUI
 struct SessionTimerView: View {
     @Environment(SessionEngine.self) private var engine
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.modelContext) private var modelContext
 
     @State private var showingQuoteSheet = false
-    @State private var showingThoughtSheet = false
+    @State private var confirmingBookFinished = false
 
     var body: some View {
         VStack(spacing: Theme.Spacing.xl) {
@@ -23,10 +24,10 @@ struct SessionTimerView: View {
                         .foregroundStyle(Theme.Palette.muted)
                 }
             }
-            pageStepper
             Spacer()
-            controls
             captureRow
+            controls
+            bookFinishedButton
         }
         .padding(Theme.Spacing.lg)
         .background(Theme.Palette.canvas)
@@ -36,7 +37,18 @@ struct SessionTimerView: View {
             }
         }
         .sheet(isPresented: $showingQuoteSheet) { QuickAddQuoteSheet() }
-        .sheet(isPresented: $showingThoughtSheet) { QuickAddThoughtSheet() }
+        .confirmationDialog(
+            "Mark this book as finished?",
+            isPresented: $confirmingBookFinished,
+            titleVisibility: .visible
+        ) {
+            Button("Yes, finish", role: .destructive) {
+                finishBookAndStopSession()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("The session will end and the book will move to your Finished list.")
+        }
     }
 
     private var header: some View {
@@ -48,40 +60,6 @@ struct SessionTimerView: View {
             Text(engine.book?.author ?? "")
                 .font(Theme.Typography.bodySm)
                 .foregroundStyle(Theme.Palette.muted)
-        }
-    }
-
-    private var pageStepper: some View {
-        VStack(spacing: Theme.Spacing.xs) {
-            Text("Current page")
-                .font(Theme.Typography.captionSm)
-                .foregroundStyle(Theme.Palette.muted)
-            HStack(spacing: Theme.Spacing.md) {
-                stepperButton("minus") {
-                    engine.setCurrentPage(engine.currentPage - 1)
-                }
-                Text("\(engine.currentPage)")
-                    .font(Theme.Typography.displaySm)
-                    .foregroundStyle(Theme.Palette.ink)
-                    .monospacedDigit()
-                    .frame(minWidth: 64)
-                stepperButton("plus") {
-                    engine.setCurrentPage(engine.currentPage + 1)
-                }
-            }
-            Text("of \(engine.book?.totalPages ?? 0)")
-                .font(Theme.Typography.captionSm)
-                .foregroundStyle(Theme.Palette.mutedSoft)
-        }
-    }
-
-    private func stepperButton(_ system: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: system)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(Theme.Palette.ink)
-                .frame(width: 44, height: 44)
-                .background(Theme.Palette.surfaceStrong, in: Circle())
         }
     }
 
@@ -105,7 +83,7 @@ struct SessionTimerView: View {
             Button {
                 engine.stop()
             } label: {
-                Text("Stop")
+                Text("Finish")
                     .font(Theme.Typography.buttonMd)
                     .foregroundStyle(Theme.Palette.canvas)
                     .frame(maxWidth: .infinity)
@@ -116,31 +94,52 @@ struct SessionTimerView: View {
         }
     }
 
-    private var captureRow: some View {
-        HStack(spacing: Theme.Spacing.md) {
-            captureButton("Add quote", system: "quote.opening") {
-                showingQuoteSheet = true
-            }
-            captureButton("Add thought", system: "lightbulb") {
-                showingThoughtSheet = true
-            }
-        }
-    }
-
-    private func captureButton(_ label: String, system: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+    private var bookFinishedButton: some View {
+        Button {
+            confirmingBookFinished = true
+        } label: {
             HStack(spacing: Theme.Spacing.xs) {
-                Image(systemName: system)
+                Image(systemName: "checkmark.circle")
                     .font(.system(size: 14, weight: .medium))
-                Text(label)
+                Text("Book is finished")
                     .font(Theme.Typography.buttonSm)
             }
-            .foregroundStyle(Theme.Palette.ink)
+            .foregroundStyle(Theme.Palette.muted)
             .padding(.horizontal, Theme.Spacing.base)
             .padding(.vertical, Theme.Spacing.sm)
             .background(Theme.Palette.surfaceSoft)
             .clipShape(Capsule())
         }
+    }
+
+    private var captureRow: some View {
+        HStack(spacing: Theme.Spacing.md) {
+            Button {
+                showingQuoteSheet = true
+            } label: {
+                HStack(spacing: Theme.Spacing.xs) {
+                    Image(systemName: "quote.opening")
+                        .font(.system(size: 14, weight: .medium))
+                    Text("Add quote")
+                        .font(Theme.Typography.buttonSm)
+                }
+                .foregroundStyle(Theme.Palette.ink)
+                .padding(.horizontal, Theme.Spacing.base)
+                .padding(.vertical, Theme.Spacing.sm)
+                .background(Theme.Palette.surfaceSoft)
+                .clipShape(Capsule())
+            }
+        }
+    }
+
+    private func finishBookAndStopSession() {
+        guard let bookID = engine.book?.id else {
+            engine.stop(asBookFinished: true)
+            return
+        }
+        let pipeline = PostSessionPipeline(context: modelContext)
+        pipeline.markBookFinished(bookID: bookID)
+        engine.stop(asBookFinished: true)
     }
 
     private func formatted(_ seconds: Int) -> String {

@@ -5,14 +5,16 @@ struct EntertainmentBookTile: View {
     @Query(filter: BookLibraryReader.inProgressEntertainmentPredicate, sort: BookLibraryReader.defaultSort)
     private var books: [Book]
 
+    let onStart: (Book) -> Void
     let onAddTapped: () -> Void
 
     var body: some View {
         AttitudeBookTile(
             label: "For fun",
             book: books.first,
-            emptyHeadline: "Pick something for fun",
-            emptyDescription: "Add a book just for enjoyment.",
+            emptyHeadline: "Add a book for fun",
+            emptyDescription: "Pick something just for enjoyment.",
+            onStart: onStart,
             onAddTapped: onAddTapped
         )
     }
@@ -26,17 +28,16 @@ struct EntertainmentBookTile: View {
         author: "Andy Weir",
         coverAssetName: "book_cover_sample_a",
         totalPages: 480,
-        currentPage: 60,
         attitude: .entertainment
     ))
     try? ctx.save()
-    return NavigationStack { EntertainmentBookTile(onAddTapped: {}) }
+    return EntertainmentBookTile(onStart: { _ in }, onAddTapped: {})
         .padding()
         .modelContainer(container)
 }
 
 #Preview("Empty") {
-    NavigationStack { EntertainmentBookTile(onAddTapped: {}) }
+    EntertainmentBookTile(onStart: { _ in }, onAddTapped: {})
         .padding()
         .modelContainer(CrawModelContainer.previewInMemory())
 }

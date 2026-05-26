@@ -2,6 +2,13 @@ import SwiftData
 import SwiftUI
 
 struct BookSearchView: View {
+    /// When non-nil, search-result taps insert directly with this attitude and skip the picker.
+    let presetAttitude: BookAttitude?
+
+    init(presetAttitude: BookAttitude? = nil) {
+        self.presetAttitude = presetAttitude
+    }
+
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
 
@@ -102,7 +109,11 @@ struct BookSearchView: View {
             LazyVStack(spacing: Theme.Spacing.sm) {
                 ForEach(Array(results.enumerated()), id: \.element.id) { index, result in
                     Button {
-                        pendingAttitudeChoice = result
+                        if let presetAttitude {
+                            insert(result, attitude: presetAttitude)
+                        } else {
+                            pendingAttitudeChoice = result
+                        }
                     } label: {
                         BookSearchResultRow(result: result)
                     }

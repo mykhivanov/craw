@@ -66,6 +66,63 @@ actor CrawAPIClient {
         try await sendNoContent(path: "/users/me", method: "DELETE")
     }
 
+    // MARK: - Quiz
+
+    func quizSections(bookName: String) async throws -> [String] {
+        let body = APIQuizSectionsRequest(bookName: bookName)
+        let bodyData = try encoder.encode(body)
+        return try await performWithBody(
+            path: "/quiz/sections",
+            method: "POST",
+            bodyData: bodyData
+        )
+    }
+
+    func quizQuestions(bookName: String, sectionOrPage: String) async throws -> [APIQuizQuestion] {
+        let body = APIQuizQuestionsRequestWithSection(
+            bookName: bookName,
+            sectionOrPage: sectionOrPage
+        )
+        let bodyData = try encoder.encode(body)
+        return try await performWithBody(
+            path: "/quiz/questions",
+            method: "POST",
+            bodyData: bodyData
+        )
+    }
+
+    func quizQuestionsForFinishedBook(bookName: String) async throws -> [APIQuizQuestion] {
+        let body = APIQuizQuestionsRequestFinished(bookName: bookName, finished: true)
+        let bodyData = try encoder.encode(body)
+        return try await performWithBody(
+            path: "/quiz/questions",
+            method: "POST",
+            bodyData: bodyData
+        )
+    }
+
+    func quizGrade(
+        bookName: String,
+        sectionOrPage: String?,
+        answers: [String]
+    ) async throws -> APIQuizGrade {
+        let body = APIQuizGradeRequest(
+            bookName: bookName,
+            sectionOrPage: sectionOrPage,
+            answers: answers
+        )
+        let bodyData = try encoder.encode(body)
+        let grade: APIQuizGrade = try await performWithBody(
+            path: "/quiz/grade",
+            method: "POST",
+            bodyData: bodyData
+        )
+        guard (1...3).contains(grade.mark) else {
+            throw APIError.decoding(QuizGradeOutOfRange(mark: grade.mark))
+        }
+        return grade
+    }
+
     private func sendNoContent(path: String, method: String) async throws {
         do {
             try await sendDiscardingResponse(
@@ -342,4 +399,10 @@ private extension String {
     var trimmingPrefixSlash: String {
         hasPrefix("/") ? String(dropFirst()) : self
     }
+}
+
+/// Sentinel error for a `POST /quiz/grade` response whose `mark` falls outside `1...3`.
+/// Wrapped as `APIError.decoding(_)` so the existing error envelope is preserved.
+private struct QuizGradeOutOfRange: Error {
+    let mark: Int
 }
