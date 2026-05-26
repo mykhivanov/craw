@@ -8,7 +8,7 @@ struct FinishedSection: View {
             EmptyView()
         } else {
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                Text("Finished")
+                Text("Finished books")
                     .font(Theme.Typography.titleSm)
                     .foregroundStyle(Theme.Palette.muted)
                     .textCase(.uppercase)
