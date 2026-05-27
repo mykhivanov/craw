@@ -16,6 +16,7 @@ struct RootView: View {
     }
 
     private enum CoverContent: Identifiable {
+        case confirm
         case timer
         case post
         var id: Self {
@@ -37,6 +38,7 @@ struct RootView: View {
         .tint(Theme.Palette.rausch)
         .fullScreenCover(item: coverBinding) { content in
             switch content {
+            case .confirm: ReadyToFocusView()
             case .timer: SessionTimerView()
             case .post: PostSessionFlow()
             }
@@ -62,6 +64,7 @@ struct RootView: View {
         Binding(
             get: {
                 let content: CoverContent? = switch engine.state {
+                case .confirming: .confirm
                 case .running, .paused: .timer
                 case .stopped, .saving: .post
                 case .idle: nil

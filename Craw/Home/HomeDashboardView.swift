@@ -120,7 +120,7 @@ struct HomeDashboardView: View {
         if let onStartSession {
             onStartSession(book)
         } else {
-            engine.start(book: book)
+            engine.stage(book: book)
         }
     }
 }

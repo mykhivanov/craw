@@ -3,6 +3,7 @@ import Observation
 
 enum SessionState: String, Equatable {
     case idle
+    case confirming
     case running
     case paused
     case stopped
@@ -39,24 +40,40 @@ final class SessionEngine {
     var isActive: Bool {
         switch state {
         case .running, .paused, .stopped, .saving: true
-        case .idle: false
+        case .idle, .confirming: false
         }
     }
 
     // MARK: - Transitions
 
-    func start(book: Book, now: Date = .now) {
+    /// Stage a book for a session that the user has not yet confirmed.
+    /// Side effects (autosave, snapshot, Live Activity) are deferred to `confirmStart` so that
+    /// cancelling leaves no trace.
+    func stage(book: Book, now: Date = .now) {
         guard state == .idle else { return }
         self.book = book
         startedAt = now
         endedAt = nil
         accumulatedElapsedSeconds = 0
-        lastResumeAt = now
+        lastResumeAt = nil
         endedAsBookFinished = false
+        state = .confirming
+    }
+
+    func confirmStart(now: Date = .now) {
+        guard state == .confirming else { return }
+        startedAt = now
+        lastResumeAt = now
         state = .running
         scheduleAutosave()
         persistSnapshot()
         LiveActivityController.shared.start(engine: self)
+    }
+
+    func cancelStaging() {
+        guard state == .confirming else { return }
+        book = nil
+        state = .idle
     }
 
     func pause(now: Date = .now) {

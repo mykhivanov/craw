@@ -26,6 +26,6 @@ struct HomeTab: View {
     }
 
     private func startSession(_ book: Book) {
-        engine.start(book: book)
+        engine.stage(book: book)
     }
 }
