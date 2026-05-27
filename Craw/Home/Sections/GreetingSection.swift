@@ -20,9 +20,16 @@ struct GreetingHeader: View {
     }
 
     var body: some View {
-        Text("Good \(partOfDay), \(weekdayName)")
-            .font(Theme.Typography.displayLg)
-            .foregroundStyle(Theme.Palette.ink)
+        HStack(spacing: Theme.Spacing.sm) {
+            Image("mascotCraw")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 40, height: 40)
+                .accessibilityHidden(true)
+            Text("Good \(partOfDay)")
+                .font(Theme.Typography.displayLg)
+                .foregroundStyle(Theme.Palette.ink)
+        }
     }
 
     private var partOfDay: String {
@@ -32,14 +39,6 @@ struct GreetingHeader: View {
         case 12..<18: return "afternoon"
         default: return "evening"
         }
-    }
-
-    private var weekdayName: String {
-        let formatter = DateFormatter()
-        formatter.calendar = .autoupdatingCurrent
-        formatter.locale = .autoupdatingCurrent
-        formatter.dateFormat = "EEEE"
-        return formatter.string(from: now)
     }
 }
 

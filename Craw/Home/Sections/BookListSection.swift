@@ -7,17 +7,9 @@ struct FinishedSection: View {
         if books.isEmpty {
             EmptyView()
         } else {
-            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                Text("Finished books")
-                    .font(Theme.Typography.titleSm)
-                    .foregroundStyle(Theme.Palette.muted)
-                    .textCase(.uppercase)
-                    .padding(.horizontal, Theme.Spacing.xxs)
-
-                VStack(spacing: Theme.Spacing.xs) {
-                    ForEach(books) { book in
-                        FinishedListRow(book: book)
-                    }
+            VStack(spacing: Theme.Spacing.xs) {
+                ForEach(books) { book in
+                    FinishedListRow(book: book)
                 }
             }
         }

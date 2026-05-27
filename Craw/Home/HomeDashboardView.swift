@@ -55,6 +55,13 @@ struct HomeDashboardView: View {
         inProgressBooks.first { $0.attitude == .study }
     }
 
+    private var weeklyFocusAverages: [FocusDifficultyReader.WeeklyAverage] {
+        FocusDifficultyReader.lastFiveWeeks(
+            sessions: readingSessions,
+            retrospectives: retrospectives
+        )
+    }
+
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: Theme.Spacing.lg) {
@@ -63,10 +70,8 @@ struct HomeDashboardView: View {
                 WeekStripSection(days: readingDays)
                 StatCardsSection(
                     days: readingDays,
-                    finishedBooks: finishedBooks,
                     sessions: readingSessions,
-                    retrospectives: retrospectives,
-                    yearlyBookGoal: ReadingGoalPreferences.annualBookTarget
+                    retrospectives: retrospectives
                 )
                 content
             }
@@ -90,6 +95,7 @@ struct HomeDashboardView: View {
         if isLibraryEmpty {
             VStack(spacing: Theme.Spacing.md) {
                 MascotEmptyTile(onAddTapped: { searchSheet = .anyAttitude })
+                FocusDifficultyChartCard(weeks: weeklyFocusAverages)
                 QuoteOfTheDayTile()
             }
         } else {
@@ -110,7 +116,14 @@ struct HomeDashboardView: View {
                     inProgressCount: inProgressBooks.count,
                     onTap: onShowAllCurrentlyReading
                 )
+                FocusDifficultyChartCard(weeks: weeklyFocusAverages)
                 QuoteOfTheDayTile()
+                if !finishedBooks.isEmpty {
+                    BooksYearGoalCard(
+                        booksRead: BookGoalReader.booksFinishedThisYear(from: finishedBooks),
+                        yearlyGoal: max(1, ReadingGoalPreferences.annualBookTarget)
+                    )
+                }
                 FinishedSection(books: finishedBooks)
             }
         }

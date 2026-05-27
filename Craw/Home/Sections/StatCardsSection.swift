@@ -2,25 +2,19 @@ import SwiftUI
 
 struct StatCardsSection: View {
     let days: [ReadingDay]
-    let finishedBooks: [Book]
     let sessions: [ReadingSession]
     let retrospectives: [SessionRetrospective]
-    let yearlyBookGoal: Int
     let streakThreshold: Int
 
     init(
         days: [ReadingDay],
-        finishedBooks: [Book] = [],
         sessions: [ReadingSession] = [],
         retrospectives: [SessionRetrospective] = [],
-        yearlyBookGoal: Int = ReadingGoalPreferences.fallbackAnnualBookTarget,
         streakThreshold: Int = 7
     ) {
         self.days = days
-        self.finishedBooks = finishedBooks
         self.sessions = sessions
         self.retrospectives = retrospectives
-        self.yearlyBookGoal = yearlyBookGoal
         self.streakThreshold = streakThreshold
     }
 
@@ -56,34 +50,16 @@ struct StatCardsSection: View {
         )
     }
 
-    private var weeklyFocusAverages: [FocusDifficultyReader.WeeklyAverage] {
-        FocusDifficultyReader.lastFiveWeeks(
-            sessions: sessions,
-            retrospectives: retrospectives
-        )
-    }
-
-    private var booksFinishedThisYear: Int {
-        BookGoalReader.booksFinishedThisYear(from: finishedBooks)
-    }
-
     var body: some View {
-        VStack(spacing: Theme.Spacing.md) {
-            LazyVGrid(columns: columns, alignment: .leading, spacing: Theme.Spacing.md) {
-                TodaysMinutesCard(metrics: todayMetrics, delta: minutesDelta)
-                StreakCard(
-                    streak: streak,
-                    calendarWeek: calendarWeek,
-                    threshold: streakThreshold
-                )
-                FullWeekReadingStreakCard(count: fullGoalWeeksCount)
-                CurrentWeekFocusDifficultyCard(average: currentFocusAverage)
-                BooksYearGoalCard(
-                    booksRead: booksFinishedThisYear,
-                    yearlyGoal: max(1, yearlyBookGoal)
-                )
-            }
-            FocusDifficultyChartCard(weeks: weeklyFocusAverages)
+        LazyVGrid(columns: columns, alignment: .leading, spacing: Theme.Spacing.md) {
+            TodaysMinutesCard(metrics: todayMetrics, delta: minutesDelta)
+            StreakCard(
+                streak: streak,
+                calendarWeek: calendarWeek,
+                threshold: streakThreshold
+            )
+            FullWeekReadingStreakCard(count: fullGoalWeeksCount)
+            CurrentWeekFocusDifficultyCard(average: currentFocusAverage)
         }
     }
 }
@@ -345,12 +321,23 @@ private struct FocusDifficultySparkline: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let points = chartPoints(size: proxy.size)
+            let segments = chartSegments(size: proxy.size)
             ZStack {
+                if let plateau = segments.plateau {
+                    Path { path in
+                        path.move(to: plateau.start)
+                        path.addLine(to: plateau.end)
+                    }
+                    .stroke(
+                        Theme.Palette.hairline,
+                        style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round)
+                    )
+                }
+
                 Path { path in
-                    guard let first = points.first else { return }
+                    guard let first = segments.points.first else { return }
                     path.move(to: first)
-                    for point in points.dropFirst() {
+                    for point in segments.points.dropFirst() {
                         path.addLine(to: point)
                     }
                 }
@@ -359,11 +346,11 @@ private struct FocusDifficultySparkline: View {
                     style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round)
                 )
 
-                ForEach(points.indices, id: \.self) { index in
+                ForEach(segments.points.indices, id: \.self) { index in
                     Circle()
                         .fill(isPlaceholder ? Theme.Palette.hairline : Theme.Palette.rausch)
                         .frame(width: 7, height: 7)
-                        .position(points[index])
+                        .position(segments.points[index])
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -371,19 +358,35 @@ private struct FocusDifficultySparkline: View {
         .padding(.vertical, Theme.Spacing.xs)
     }
 
-    private func chartPoints(size: CGSize) -> [CGPoint] {
+    private struct ChartSegments {
+        let points: [CGPoint]
+        let plateau: (start: CGPoint, end: CGPoint)?
+    }
+
+    private func chartSegments(size: CGSize) -> ChartSegments {
         let values: [Double?] = if isPlaceholder {
             placeholderValues.map { Optional($0) }
         } else {
             weeks.map(\.average)
         }
 
-        return values.enumerated().compactMap { index, value -> CGPoint? in
+        let points: [CGPoint] = values.enumerated().compactMap { index, value -> CGPoint? in
             guard let value else { return nil }
             let x = values.count <= 1 ? size.width / 2 : CGFloat(index) / CGFloat(values.count - 1) * size.width
             let clamped = min(5.0, max(1.0, value))
             let y = size.height - CGFloat((clamped - 1.0) / 4.0) * size.height
             return CGPoint(x: x, y: y)
         }
+
+        let firstDataIndex = values.firstIndex(where: { $0 != nil }) ?? 0
+        let plateau: (start: CGPoint, end: CGPoint)? = if !isPlaceholder, firstDataIndex > 0,
+                                                          let firstPoint = points.first
+        {
+            (CGPoint(x: 0, y: firstPoint.y), firstPoint)
+        } else {
+            nil
+        }
+
+        return ChartSegments(points: points, plateau: plateau)
     }
 }
