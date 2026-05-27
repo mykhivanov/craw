@@ -20,16 +20,19 @@ struct GreetingHeader: View {
     }
 
     var body: some View {
-        HStack(spacing: Theme.Spacing.sm) {
+        HStack(alignment: .center, spacing: Theme.Spacing.sm) {
             Image("mascotCraw")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 40, height: 40)
+                .frame(width: 32, height: 32)
                 .accessibilityHidden(true)
             Text("Good \(partOfDay)")
-                .font(Theme.Typography.displayLg)
+                .font(Theme.Typography.displaySm)
                 .foregroundStyle(Theme.Palette.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
         }
+        .tileCard()
     }
 
     private var partOfDay: String {

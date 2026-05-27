@@ -65,8 +65,12 @@ struct HomeDashboardView: View {
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: Theme.Spacing.lg) {
-                GreetingSection()
-                LiveCounterTile()
+                HStack(alignment: .top, spacing: Theme.Spacing.md) {
+                    GreetingSection()
+                        .frame(maxHeight: .infinity)
+                    LiveCounterTile()
+                        .frame(maxHeight: .infinity)
+                }
                 WeekStripSection(days: readingDays)
                 StatCardsSection(
                     days: readingDays,
