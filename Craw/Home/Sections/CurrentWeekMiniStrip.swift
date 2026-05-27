@@ -18,9 +18,9 @@ private struct MiniDayMarker: View {
     var body: some View {
         VStack(spacing: 2) {
             Circle()
-                .fill(day.hasActivity ? Theme.Palette.rausch : Theme.Palette.hairline)
+                .fill(day.hasMetGoal ? Theme.Palette.rausch : Theme.Palette.hairline)
                 .frame(width: 8, height: 8)
-            Text(String(day.weekdaySymbol.prefix(1)))
+            Text(day.weekdaySymbol)
                 .font(.system(size: 9, weight: day.isToday ? .bold : .regular))
                 .foregroundStyle(day.isToday ? Theme.Palette.ink : Theme.Palette.muted)
         }

@@ -20,7 +20,8 @@ enum ReadingActivityReader {
     struct CalendarWeekDay: Equatable {
         let date: Date
         let weekdaySymbol: String
-        let hasActivity: Bool
+        let minutesRead: Int
+        let hasMetGoal: Bool
         let isToday: Bool
     }
 
@@ -78,11 +79,13 @@ enum ReadingActivityReader {
     static func currentStreak(
         from days: [ReadingDay],
         now: Date = .now,
-        calendar: Calendar = .autoupdatingCurrent
+        calendar: Calendar = .autoupdatingCurrent,
+        dailyGoalMinutes: Int = ReadingGoals.dailyMinutes
     ) -> Int {
+        guard dailyGoalMinutes > 0 else { return 0 }
         let today = calendar.startOfDay(for: now)
         let todayRow = days.first(where: { $0.date == today })
-        let anchor: Date = if let todayRow, todayRow.minutesRead > 0 {
+        let anchor: Date = if let todayRow, todayRow.minutesRead >= dailyGoalMinutes {
             today
         } else {
             calendar.date(byAdding: .day, value: -1, to: today) ?? today
@@ -91,7 +94,7 @@ enum ReadingActivityReader {
         var cursor = anchor
         while true {
             guard let row = days.first(where: { $0.date == cursor }),
-                  row.minutesRead > 0
+                  row.minutesRead >= dailyGoalMinutes
             else {
                 break
             }
@@ -107,12 +110,25 @@ enum ReadingActivityReader {
     static func currentCalendarWeek(
         from days: [ReadingDay],
         now: Date = .now,
-        calendar: Calendar = .autoupdatingCurrent
+        calendar: Calendar = .autoupdatingCurrent,
+        dailyGoalMinutes: Int = ReadingGoals.dailyMinutes
+    ) -> [CalendarWeekDay] {
+        currentSundayFirstWeek(
+            from: days,
+            now: now,
+            calendar: calendar,
+            dailyGoalMinutes: dailyGoalMinutes
+        )
+    }
+
+    static func currentSundayFirstWeek(
+        from days: [ReadingDay],
+        now: Date = .now,
+        calendar: Calendar = .autoupdatingCurrent,
+        dailyGoalMinutes: Int = ReadingGoals.dailyMinutes
     ) -> [CalendarWeekDay] {
         let today = calendar.startOfDay(for: now)
-        let interval = calendar.dateInterval(of: .weekOfYear, for: today)
-            ?? DateInterval(start: today, duration: 7 * 86400)
-        let weekStart = calendar.startOfDay(for: interval.start)
+        let weekStart = sundayStartOfWeek(for: today, calendar: calendar)
         let symbols = calendar.shortWeekdaySymbols
 
         return (0..<7).compactMap { offset -> CalendarWeekDay? in
@@ -121,13 +137,42 @@ enum ReadingActivityReader {
             }
             let rawIdx = calendar.component(.weekday, from: date) - 1
             let weekdayIdx = max(0, min(symbols.count - 1, rawIdx))
-            let hasActivity = (days.first(where: { $0.date == date })?.minutesRead ?? 0) > 0
+            let minutesRead = days.first(where: { $0.date == date })?.minutesRead ?? 0
             return CalendarWeekDay(
                 date: date,
                 weekdaySymbol: symbols[weekdayIdx],
-                hasActivity: hasActivity,
+                minutesRead: minutesRead,
+                hasMetGoal: dailyGoalMinutes > 0 && minutesRead >= dailyGoalMinutes,
                 isToday: date == today
             )
         }
+    }
+
+    static func fullGoalWeeksCount(
+        from days: [ReadingDay],
+        dailyGoalMinutes: Int = ReadingGoals.dailyMinutes,
+        calendar: Calendar = .autoupdatingCurrent
+    ) -> Int {
+        guard dailyGoalMinutes > 0 else { return 0 }
+
+        let successfulDates = days
+            .filter { $0.minutesRead >= dailyGoalMinutes }
+            .map { calendar.startOfDay(for: $0.date) }
+
+        let groupedByWeek = Dictionary(grouping: successfulDates) { date in
+            sundayStartOfWeek(for: date, calendar: calendar)
+        }
+
+        return groupedByWeek.values.filter { Set($0).count == 7 }.count
+    }
+
+    static func sundayStartOfWeek(
+        for date: Date,
+        calendar: Calendar = .autoupdatingCurrent
+    ) -> Date {
+        let startOfDay = calendar.startOfDay(for: date)
+        let weekday = calendar.component(.weekday, from: startOfDay)
+        let daysFromSunday = weekday - 1
+        return calendar.date(byAdding: .day, value: -daysFromSunday, to: startOfDay) ?? startOfDay
     }
 }

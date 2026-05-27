@@ -43,9 +43,12 @@ struct AttitudeBookTile: View {
 
     private func bookContent(_ book: Book) -> some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            CoverPlaceholder(coverAssetName: book.coverAssetName, coverImageURL: book.coverImageURL)
-                .frame(height: 120)
-                .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.button))
+            HStack {
+                CoverPlaceholder(coverAssetName: book.coverAssetName, coverImageURL: book.coverImageURL)
+                    .frame(width: 76, height: 112)
+                    .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.button))
+                Spacer(minLength: 0)
+            }
             VStack(alignment: .leading, spacing: 2) {
                 Text(book.title)
                     .font(Theme.Typography.titleMd)

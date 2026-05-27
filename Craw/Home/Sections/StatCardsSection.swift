@@ -2,12 +2,32 @@ import SwiftUI
 
 struct StatCardsSection: View {
     let days: [ReadingDay]
+    let finishedBooks: [Book]
+    let sessions: [ReadingSession]
+    let retrospectives: [SessionRetrospective]
+    let yearlyBookGoal: Int
     let streakThreshold: Int
 
-    init(days: [ReadingDay], streakThreshold: Int = 7) {
+    init(
+        days: [ReadingDay],
+        finishedBooks: [Book] = [],
+        sessions: [ReadingSession] = [],
+        retrospectives: [SessionRetrospective] = [],
+        yearlyBookGoal: Int = ReadingGoalPreferences.fallbackAnnualBookTarget,
+        streakThreshold: Int = 7
+    ) {
         self.days = days
+        self.finishedBooks = finishedBooks
+        self.sessions = sessions
+        self.retrospectives = retrospectives
+        self.yearlyBookGoal = yearlyBookGoal
         self.streakThreshold = streakThreshold
     }
+
+    private let columns = [
+        GridItem(.flexible(), spacing: Theme.Spacing.md),
+        GridItem(.flexible(), spacing: Theme.Spacing.md)
+    ]
 
     private var todayMetrics: ReadingActivityReader.DayMetrics {
         ReadingActivityReader.today(from: days)
@@ -25,14 +45,45 @@ struct StatCardsSection: View {
         ReadingActivityReader.currentCalendarWeek(from: days)
     }
 
+    private var fullGoalWeeksCount: Int {
+        ReadingActivityReader.fullGoalWeeksCount(from: days)
+    }
+
+    private var currentFocusAverage: Double? {
+        FocusDifficultyReader.currentWeekAverage(
+            sessions: sessions,
+            retrospectives: retrospectives
+        )
+    }
+
+    private var weeklyFocusAverages: [FocusDifficultyReader.WeeklyAverage] {
+        FocusDifficultyReader.lastFiveWeeks(
+            sessions: sessions,
+            retrospectives: retrospectives
+        )
+    }
+
+    private var booksFinishedThisYear: Int {
+        BookGoalReader.booksFinishedThisYear(from: finishedBooks)
+    }
+
     var body: some View {
-        HStack(spacing: Theme.Spacing.md) {
-            TodaysMinutesCard(metrics: todayMetrics, delta: minutesDelta)
-            StreakCard(
-                streak: streak,
-                calendarWeek: calendarWeek,
-                threshold: streakThreshold
-            )
+        VStack(spacing: Theme.Spacing.md) {
+            LazyVGrid(columns: columns, alignment: .leading, spacing: Theme.Spacing.md) {
+                TodaysMinutesCard(metrics: todayMetrics, delta: minutesDelta)
+                StreakCard(
+                    streak: streak,
+                    calendarWeek: calendarWeek,
+                    threshold: streakThreshold
+                )
+                FullWeekReadingStreakCard(count: fullGoalWeeksCount)
+                CurrentWeekFocusDifficultyCard(average: currentFocusAverage)
+                BooksYearGoalCard(
+                    booksRead: booksFinishedThisYear,
+                    yearlyGoal: max(1, yearlyBookGoal)
+                )
+            }
+            FocusDifficultyChartCard(weeks: weeklyFocusAverages)
         }
     }
 }
@@ -137,5 +188,202 @@ struct StreakCard: View {
             }
         }
         .crawCard()
+    }
+}
+
+struct FullWeekReadingStreakCard: View {
+    let count: Int
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            Text("Full week streak")
+                .font(Theme.Typography.captionSm)
+                .foregroundStyle(Theme.Palette.muted)
+            HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.xs) {
+                Text("\(count)")
+                    .font(Theme.Typography.displaySm)
+                    .foregroundStyle(Theme.Palette.ink)
+                Text(count == 1 ? "week" : "weeks")
+                    .font(Theme.Typography.bodySm)
+                    .foregroundStyle(Theme.Palette.muted)
+            }
+            Text("Sun-Sat goals hit")
+                .font(Theme.Typography.badge)
+                .foregroundStyle(Theme.Palette.mutedSoft)
+        }
+        .crawCard()
+    }
+}
+
+struct CurrentWeekFocusDifficultyCard: View {
+    let average: Double?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            Text("Focus difficulty")
+                .font(Theme.Typography.captionSm)
+                .foregroundStyle(Theme.Palette.muted)
+            if let average {
+                HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.xs) {
+                    Text(String(format: "%.1f", average))
+                        .font(Theme.Typography.displaySm)
+                        .foregroundStyle(Theme.Palette.ink)
+                    Text("/ 5")
+                        .font(Theme.Typography.bodySm)
+                        .foregroundStyle(Theme.Palette.muted)
+                }
+                Text("This week avg")
+                    .font(Theme.Typography.badge)
+                    .foregroundStyle(Theme.Palette.mutedSoft)
+            } else {
+                Text("No focus data")
+                    .font(Theme.Typography.titleSm)
+                    .foregroundStyle(Theme.Palette.ink)
+                Text("Finish a session to rate it.")
+                    .font(Theme.Typography.badge)
+                    .foregroundStyle(Theme.Palette.mutedSoft)
+            }
+        }
+        .crawCard()
+    }
+}
+
+struct BooksYearGoalCard: View {
+    let booksRead: Int
+    let yearlyGoal: Int
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            Text("Books this year")
+                .font(Theme.Typography.captionSm)
+                .foregroundStyle(Theme.Palette.muted)
+            if booksRead == 0 {
+                HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.xs) {
+                    Text("\(yearlyGoal)")
+                        .font(Theme.Typography.displaySm)
+                        .foregroundStyle(Theme.Palette.ink)
+                    Text("book goal")
+                        .font(Theme.Typography.bodySm)
+                        .foregroundStyle(Theme.Palette.muted)
+                }
+                Text("No books finished yet")
+                    .font(Theme.Typography.badge)
+                    .foregroundStyle(Theme.Palette.mutedSoft)
+            } else {
+                HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.xs) {
+                    Text("\(booksRead)")
+                        .font(Theme.Typography.displaySm)
+                        .foregroundStyle(Theme.Palette.ink)
+                    Text("/ \(yearlyGoal)")
+                        .font(Theme.Typography.bodySm)
+                        .foregroundStyle(Theme.Palette.muted)
+                }
+                Text("books read / goal")
+                    .font(Theme.Typography.badge)
+                    .foregroundStyle(Theme.Palette.mutedSoft)
+            }
+        }
+        .crawCard()
+    }
+}
+
+struct FocusDifficultyChartCard: View {
+    let weeks: [FocusDifficultyReader.WeeklyAverage]
+
+    private var hasData: Bool {
+        weeks.contains { $0.average != nil }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            HStack {
+                Text("Focus trend")
+                    .font(Theme.Typography.captionSm)
+                    .foregroundStyle(Theme.Palette.muted)
+                Spacer()
+                Text("Last 5 weeks")
+                    .font(Theme.Typography.badge)
+                    .foregroundStyle(Theme.Palette.mutedSoft)
+            }
+
+            FocusDifficultySparkline(weeks: weeks, isPlaceholder: !hasData)
+                .frame(height: 96)
+
+            HStack {
+                ForEach(weeks) { week in
+                    Text(weekLabel(for: week.weekStart))
+                        .font(Theme.Typography.badge)
+                        .foregroundStyle(Theme.Palette.mutedSoft)
+                        .frame(maxWidth: .infinity)
+                }
+            }
+
+            if !hasData {
+                Text("No focus ratings yet")
+                    .font(Theme.Typography.badge)
+                    .foregroundStyle(Theme.Palette.mutedSoft)
+            }
+        }
+        .crawCard()
+    }
+
+    private func weekLabel(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = .autoupdatingCurrent
+        formatter.dateFormat = "M/d"
+        return formatter.string(from: date)
+    }
+}
+
+private struct FocusDifficultySparkline: View {
+    let weeks: [FocusDifficultyReader.WeeklyAverage]
+    let isPlaceholder: Bool
+
+    private var placeholderValues: [Double] {
+        [2.0, 2.8, 2.4, 3.2, 2.7]
+    }
+
+    var body: some View {
+        GeometryReader { proxy in
+            let points = chartPoints(size: proxy.size)
+            ZStack {
+                Path { path in
+                    guard let first = points.first else { return }
+                    path.move(to: first)
+                    for point in points.dropFirst() {
+                        path.addLine(to: point)
+                    }
+                }
+                .stroke(
+                    isPlaceholder ? Theme.Palette.hairline : Theme.Palette.rausch,
+                    style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round)
+                )
+
+                ForEach(points.indices, id: \.self) { index in
+                    Circle()
+                        .fill(isPlaceholder ? Theme.Palette.hairline : Theme.Palette.rausch)
+                        .frame(width: 7, height: 7)
+                        .position(points[index])
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .padding(.vertical, Theme.Spacing.xs)
+    }
+
+    private func chartPoints(size: CGSize) -> [CGPoint] {
+        let values: [Double?] = if isPlaceholder {
+            placeholderValues.map { Optional($0) }
+        } else {
+            weeks.map(\.average)
+        }
+
+        return values.enumerated().compactMap { index, value -> CGPoint? in
+            guard let value else { return nil }
+            let x = values.count <= 1 ? size.width / 2 : CGFloat(index) / CGFloat(values.count - 1) * size.width
+            let clamped = min(5.0, max(1.0, value))
+            let y = size.height - CGFloat((clamped - 1.0) / 4.0) * size.height
+            return CGPoint(x: x, y: y)
+        }
     }
 }

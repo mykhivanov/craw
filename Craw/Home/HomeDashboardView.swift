@@ -16,6 +16,12 @@ struct HomeDashboardView: View {
     @Query(sort: [SortDescriptor(\ReadingDay.date, order: .reverse)])
     private var readingDays: [ReadingDay]
 
+    @Query(sort: [SortDescriptor(\ReadingSession.endedAt, order: .reverse)])
+    private var readingSessions: [ReadingSession]
+
+    @Query(sort: [SortDescriptor(\SessionRetrospective.createdAt, order: .reverse)])
+    private var retrospectives: [SessionRetrospective]
+
     @State private var searchSheet: SearchSheet?
 
     init(
@@ -55,7 +61,13 @@ struct HomeDashboardView: View {
                 GreetingSection()
                 LiveCounterTile()
                 WeekStripSection(days: readingDays)
-                StatCardsSection(days: readingDays)
+                StatCardsSection(
+                    days: readingDays,
+                    finishedBooks: finishedBooks,
+                    sessions: readingSessions,
+                    retrospectives: retrospectives,
+                    yearlyBookGoal: ReadingGoalPreferences.annualBookTarget
+                )
                 content
             }
             .padding(.horizontal, Theme.Spacing.base)
@@ -82,16 +94,18 @@ struct HomeDashboardView: View {
             }
         } else {
             VStack(spacing: Theme.Spacing.md) {
-                EntertainmentBookTile(
-                    book: entertainmentBook,
-                    onStart: startSession,
-                    onAddTapped: { searchSheet = .entertainment }
-                )
-                StudyBookTile(
-                    book: studyBook,
-                    onStart: startSession,
-                    onAddTapped: { searchSheet = .study }
-                )
+                HStack(alignment: .top, spacing: Theme.Spacing.md) {
+                    EntertainmentBookTile(
+                        book: entertainmentBook,
+                        onStart: startSession,
+                        onAddTapped: { searchSheet = .entertainment }
+                    )
+                    StudyBookTile(
+                        book: studyBook,
+                        onStart: startSession,
+                        onAddTapped: { searchSheet = .study }
+                    )
+                }
                 AllCurrentlyReadingEntry(
                     inProgressCount: inProgressBooks.count,
                     onTap: onShowAllCurrentlyReading

@@ -113,6 +113,15 @@ enum YearlyGoal: String, CaseIterable, Identifiable {
         case .twelvePlus: "bolt.fill"
         }
     }
+
+    var annualBookTarget: Int {
+        switch self {
+        case .youTellMe: 12
+        case .oneToSix: 6
+        case .sevenToTwelve: 12
+        case .twelvePlus: 24
+        }
+    }
 }
 
 @Observable
@@ -144,6 +153,9 @@ final class OnboardingState {
     }
 
     func complete() {
+        if let yearlyGoal {
+            ReadingGoalPreferences.save(yearlyGoal: yearlyGoal)
+        }
         isCompleted = true
     }
 }
