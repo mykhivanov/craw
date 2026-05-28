@@ -30,17 +30,11 @@ struct PaywallView: View {
 
     private func content(product: StoreProduct) -> some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                 header
-                founderNote
-                qaBlock(
-                    question: "What are you paying for?",
-                    answer: "AI, infrastructure, and ongoing development to make your experience best in class."
-                )
-                qaBlock(
-                    question: "What do you get?",
-                    answer: "Progress quiz to make the best out of it, book suggestions, statistics, competition."
-                )
+                benefitsCard
+                subscriptionFounderNote
+                feedbackInvitation
             }
             .padding(.horizontal, Theme.Spacing.base)
             .padding(.top, Theme.Spacing.lg)
@@ -51,16 +45,31 @@ struct PaywallView: View {
             bottomBar(product: product)
         }
         .overlay(alignment: .topTrailing) {
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Theme.Palette.muted)
-                    .padding(Theme.Spacing.base)
-            }
-            .accessibilityLabel("Close")
+            closeButton
+                .padding(.top, Theme.Spacing.sm)
+                .padding(.trailing, Theme.Spacing.md)
         }
+    }
+
+    private var closeButton: some View {
+        Button {
+            dismiss()
+        } label: {
+            Image(systemName: "xmark")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Theme.Palette.muted)
+                .frame(width: 36, height: 36)
+                .background(Theme.Palette.surfaceCard)
+                .clipShape(Circle())
+                .overlay(
+                    Circle()
+                        .stroke(Theme.Palette.hairlineSoft, lineWidth: 1)
+                )
+                .crawCardShadow()
+                .padding(Theme.Spacing.xs)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Close")
     }
 
     private func bottomBar(product: StoreProduct) -> some View {
@@ -77,8 +86,10 @@ struct PaywallView: View {
         }
         .padding(.horizontal, Theme.Spacing.base)
         .padding(.top, Theme.Spacing.md)
+        .padding(.bottom, Theme.Spacing.sm)
         .background(
             Theme.Palette.canvas
+                .ignoresSafeArea(edges: .bottom)
                 .overlay(
                     Rectangle()
                         .fill(Theme.Palette.hairlineSoft)
@@ -89,83 +100,8 @@ struct PaywallView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             Text("Craw Membership")
-                .font(Theme.Typography.onboardingHero)
-                .foregroundStyle(Theme.Palette.ink)
-            Text("Unlock the full reading experience.")
-                .font(Theme.Typography.bodyLg)
-                .foregroundStyle(Theme.Palette.muted)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.top, Theme.Spacing.lg)
-    }
-
-    private func qaBlock(question: String, answer: String) -> some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text(question)
-                .font(Theme.Typography.displaySm)
-                .foregroundStyle(Theme.Palette.ink)
-            Text(answer)
-                .font(Theme.Typography.bodyMd)
-                .foregroundStyle(Theme.Palette.body)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(Theme.Spacing.base)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(qaBlockBackground)
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Radius.card)
-                .stroke(Theme.Palette.hairlineSoft, lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card))
-        .crawCardShadow()
-    }
-
-    private var qaBlockBackground: some View {
-        ZStack(alignment: .topTrailing) {
-            Theme.Palette.surfaceCard
-
-            Circle()
-                .fill(Theme.Palette.rauschTint)
-                .frame(width: 120, height: 120)
-                .offset(x: 34, y: -52)
-
-            LinearGradient(
-                colors: [
-                    Theme.Palette.rauschTint.opacity(0.55),
-                    Theme.Palette.canvas
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        }
-    }
-
-    private var founderNote: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
-            founderNoteHeader
-            founderNoteBody
-
-            Divider()
-                .background(Theme.Palette.hairlineSoft)
-
-            founderSignatureRow
-        }
-        .padding(.horizontal, Theme.Spacing.lg)
-        .padding(.vertical, Theme.Spacing.xl)
-        .background(founderNoteBackground)
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Radius.card)
-                .stroke(Theme.Palette.hairlineSoft, lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card))
-        .crawCardShadow()
-    }
-
-    private var founderNoteHeader: some View {
-        HStack(alignment: .top) {
-            Text("Founder note")
                 .font(Theme.Typography.badge)
                 .foregroundStyle(Theme.Palette.rausch)
                 .textCase(.uppercase)
@@ -175,62 +111,134 @@ struct PaywallView: View {
                 .background(Theme.Palette.rauschTint)
                 .clipShape(Capsule())
 
-            Spacer(minLength: Theme.Spacing.base)
-
-            Image(systemName: "quote.opening")
-                .font(.system(size: 34, weight: .bold))
-                .foregroundStyle(Theme.Palette.rausch)
-                .accessibilityHidden(true)
-        }
-    }
-
-    private var founderNoteBody: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.base) {
-            Text("I didn't want to flood this page with marketing.")
-                .font(Theme.Typography.bodyMd)
-                .foregroundStyle(Theme.Palette.body)
-                .lineSpacing(3)
-                .fixedSize(horizontal: false, vertical: true)
-
-            Text(
-                "If you're deciding whether to subscribe, you only need answers to two questions — they're right below this note."
-            )
-            .font(Theme.Typography.bodyLg)
-            .foregroundStyle(Theme.Palette.ink)
-            .lineSpacing(4)
-            .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    private var founderSignatureRow: some View {
-        HStack(spacing: Theme.Spacing.md) {
-            Image("mike")
-                .resizable()
-                .scaledToFill()
-                .frame(width: 52, height: 52)
-                .clipShape(Circle())
-                .overlay(Circle().stroke(Theme.Palette.canvas, lineWidth: 3))
-                .crawCardShadow()
-
-            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                Text("Mike")
-                    .font(Theme.Typography.titleMd)
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                Text("A better reading habit, built with you.")
+                    .font(Theme.Typography.onboardingHero)
                     .foregroundStyle(Theme.Palette.ink)
-                Text("creator of Craw")
-                    .font(Theme.Typography.captionSm)
-                    .foregroundStyle(Theme.Palette.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Image("mascotCraw")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 72, height: 72)
+                    .accessibilityHidden(true)
             }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, Theme.Spacing.lg)
+    }
 
-            Spacer()
+    private var benefitsCard: some View {
+        VStack(spacing: 0) {
+            ForEach(Array(Self.benefits.enumerated()), id: \.offset) { index, benefit in
+                benefitRow(benefit)
 
-            Image(systemName: "book.closed.fill")
-                .font(.system(size: 16, weight: .semibold))
+                if index < Self.benefits.count - 1 {
+                    Divider()
+                        .background(Theme.Palette.hairlineSoft)
+                        .padding(.leading, 44)
+                }
+            }
+        }
+        .padding(Theme.Spacing.base)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.Palette.surfaceCard)
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.card)
+                .stroke(Theme.Palette.hairlineSoft, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card))
+        .crawCardShadow()
+    }
+
+    private func benefitRow(_ benefit: PaywallBenefit) -> some View {
+        HStack(alignment: .top, spacing: Theme.Spacing.md) {
+            Image(systemName: benefit.iconName)
+                .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(Theme.Palette.rausch)
-                .frame(width: 38, height: 38)
+                .frame(width: 32, height: 32)
                 .background(Theme.Palette.rauschTint)
                 .clipShape(Circle())
                 .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                Text(benefit.title)
+                    .font(Theme.Typography.titleMd)
+                    .foregroundStyle(Theme.Palette.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(benefit.detail)
+                    .font(Theme.Typography.bodySm)
+                    .foregroundStyle(Theme.Palette.muted)
+                    .multilineTextAlignment(.leading)
+                    .lineSpacing(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .layoutPriority(1)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, Theme.Spacing.md)
+    }
+
+    private var subscriptionFounderNote: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            HStack(spacing: Theme.Spacing.md) {
+                Image("mike")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 40, height: 40)
+                    .clipShape(Circle())
+                    .overlay(Circle().stroke(Theme.Palette.canvas, lineWidth: 2))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("A note from Mike")
+                        .font(Theme.Typography.titleMd)
+                        .foregroundStyle(Theme.Palette.ink)
+                    Text("creator of Craw")
+                        .font(Theme.Typography.captionSm)
+                        .foregroundStyle(Theme.Palette.muted)
+                }
+
+                Spacer()
+            }
+
+            Text(
+                "I'm building Craw as a solo developer, so I want the subscription to be plain: it pays for the features that cost money to run and for the time to keep making the app better. If something would make Craw more useful for you, I still want to hear it."
+            )
+            .font(Theme.Typography.bodySm)
+            .foregroundStyle(Theme.Palette.body)
+            .lineSpacing(3)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(Theme.Spacing.base)
+        .background(founderNoteBackground)
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.card)
+                .stroke(Theme.Palette.hairlineSoft, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card))
+        .crawCardShadow()
+    }
+
+    private var feedbackInvitation: some View {
+        HStack(alignment: .top, spacing: Theme.Spacing.md) {
+            Image(systemName: "bubble.left.and.bubble.right.fill")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Theme.Palette.rausch)
+                .frame(width: 32, height: 32)
+                .background(Theme.Palette.rauschTint)
+                .clipShape(Circle())
+                .accessibilityHidden(true)
+
+            Text("Have an idea or something missing? I'm still listening.")
+                .font(Theme.Typography.bodySm)
+                .foregroundStyle(Theme.Palette.body)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(Theme.Spacing.base)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.Palette.surfaceSoft)
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card))
     }
 
     private var founderNoteBackground: some View {
@@ -239,10 +247,28 @@ struct PaywallView: View {
 
             Circle()
                 .fill(Theme.Palette.rauschTint)
-                .frame(width: 150, height: 150)
-                .offset(x: 58, y: -58)
+                .frame(width: 96, height: 96)
+                .offset(x: 36, y: -48)
         }
     }
+
+    private static let benefits = [
+        PaywallBenefit(
+            iconName: "chart.line.uptrend.xyaxis",
+            title: "Personal reading progress",
+            detail: "Stats and trends that show what changed, not just what happened."
+        ),
+        PaywallBenefit(
+            iconName: "sparkles",
+            title: "Smarter guidance",
+            detail: "Quizzes to help you memorize reading content and focus."
+        ),
+        PaywallBenefit(
+            iconName: "flame.fill",
+            title: "Community competition access",
+            detail: "Streaks, competition, and small nudges to keep the habit alive."
+        )
+    ]
 
     private func cta(product: StoreProduct) -> some View {
         let price = product.localizedPriceString
@@ -316,6 +342,12 @@ final class PaywallViewModel {
     var isRestoring = false
     var isLoadingOfferings = false
     var errorMessage: String?
+}
+
+private struct PaywallBenefit {
+    let iconName: String
+    let title: String
+    let detail: String
 }
 
 struct PaywallFallbackView: View {
