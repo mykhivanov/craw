@@ -9,12 +9,21 @@ actor CrawAPIClient {
     private let encoder: JSONEncoder
     private let logger = Logger(subsystem: "com.mykhivanov.Craw", category: "CrawAPIClient")
 
+    /// Read at the start of every subscription-gated method. Unset (or returning `false`)
+    /// means the method short-circuits to `APIError.subscriptionRequired` without touching
+    /// the network or fetching an auth token.
+    private var subscriptionGate: (@Sendable () async -> Bool)?
+
     init(baseURL: URL, session: URLSession = .shared, tokenProvider: AuthTokenProvider) {
         self.baseURL = baseURL
         self.session = session
         self.tokenProvider = tokenProvider
         decoder = JSONDecoder.crawDefault
         encoder = JSONEncoder.crawDefault
+    }
+
+    func setSubscriptionGate(_ gate: @escaping @Sendable () async -> Bool) {
+        subscriptionGate = gate
     }
 
     func bootstrapSession() async throws -> APIUser {
@@ -123,6 +132,45 @@ actor CrawAPIClient {
         return grade
     }
 
+    // MARK: - Reading stats
+
+    func postDailyStats(_ payload: DailyStatsPayload) async throws -> DailyStatsAck {
+        try await requireSubscription()
+        let bodyData = try encoder.encode(payload)
+        return try await performWithBody(
+            path: "/users/me/daily-stats",
+            method: "POST",
+            bodyData: bodyData
+        )
+    }
+
+    func fetchUserStats(period: StatsPeriod = .month) async throws -> StatsBundle {
+        try await requireSubscription()
+        return try await performGet(
+            path: "/users/me/stats",
+            method: "GET",
+            query: [URLQueryItem(name: "period", value: period.rawValue)]
+        )
+    }
+
+    func fetchMethodology() async throws -> MethodologyDocument {
+        try await performGet(
+            path: "/methodology",
+            method: "GET",
+            query: []
+        )
+    }
+
+    private func requireSubscription() async throws {
+        guard let gate = subscriptionGate else {
+            throw APIError.subscriptionRequired
+        }
+        let active = await gate()
+        guard active else {
+            throw APIError.subscriptionRequired
+        }
+    }
+
     private func sendNoContent(path: String, method: String) async throws {
         do {
             try await sendDiscardingResponse(
@@ -179,6 +227,8 @@ actor CrawAPIClient {
             return
         case 401:
             throw APIError.unauthorized
+        case 402:
+            throw APIError.subscriptionRequired
         case 404:
             throw APIError.notFound
         case 409:
@@ -315,6 +365,8 @@ actor CrawAPIClient {
             }
         case 401:
             throw APIError.unauthorized
+        case 402:
+            throw APIError.subscriptionRequired
         case 404:
             throw APIError.notFound
         case 409:

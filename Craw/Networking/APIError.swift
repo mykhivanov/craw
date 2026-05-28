@@ -2,6 +2,7 @@ import Foundation
 
 enum APIError: Error {
     case unauthorized
+    case subscriptionRequired
     case notFound
     case rateLimited(retryAfter: TimeInterval?)
     case server(message: String, code: String?)
@@ -16,6 +17,8 @@ extension APIError {
         switch self {
         case .unauthorized:
             "Your session has expired. Please sign in again."
+        case .subscriptionRequired:
+            "A Craw subscription is required to access this feature."
         case .notFound:
             "Couldn't find what you were looking for."
         case .rateLimited:

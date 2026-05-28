@@ -1,7 +1,6 @@
 import Foundation
 
 enum SubscriptionEntitlement {
-    static let identifier = "craw_pro"
-    static let defaultOfferingIdentifier = "default"
-    static let monthlyProductIdentifier = "com.mykhivanov.Craw.monthly"
+    static let identifier = "Craw Membership"
+    static let monthlyProductIdentifier = "CRAW_MONTHLY_15"
 }

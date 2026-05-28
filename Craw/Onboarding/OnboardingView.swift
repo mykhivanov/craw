@@ -1,7 +1,9 @@
+import SwiftData
 import SwiftUI
 
 struct OnboardingView: View {
     @Environment(OnboardingState.self) private var state
+    @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         VStack(spacing: Theme.Spacing.base) {
@@ -35,8 +37,17 @@ struct OnboardingView: View {
         case 4:
             ScheduleStep(state: state, onContinue: state.advance)
         default:
-            YearlyGoalStep(state: state, onContinue: state.complete)
+            YearlyGoalStep(state: state, onContinue: completeOnboarding)
         }
+    }
+
+    private func completeOnboarding() {
+        UserGoalReader.upsert(
+            dailyMinutes: state.dailyReadingMinutes,
+            yearlyBooks: state.yearlyGoal?.annualBookTarget,
+            in: modelContext
+        )
+        state.complete()
     }
 }
 

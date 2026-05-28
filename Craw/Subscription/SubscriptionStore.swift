@@ -14,7 +14,7 @@ final class SubscriptionStore {
     }
 
     private(set) var status: Status = .unknown
-    private(set) var currentOffering: Offering?
+    private(set) var currentProduct: StoreProduct?
     private(set) var lastErrorMessage: String?
 
     init() {
@@ -29,12 +29,12 @@ final class SubscriptionStore {
         do {
             let info = try await Purchases.shared.customerInfo()
             apply(customerInfo: info)
-            let offerings = try await Purchases.shared.offerings()
-            currentOffering = offerings.offering(identifier: SubscriptionEntitlement.defaultOfferingIdentifier)
-                ?? offerings.current
         } catch {
             lastErrorMessage = error.localizedDescription
         }
+        // Fetch the product directly by id instead of going through offerings.
+        let products = await Purchases.shared.products([SubscriptionEntitlement.monthlyProductIdentifier])
+        currentProduct = products.first
     }
 
     func identify(clerkUserID: String) async {
@@ -54,11 +54,11 @@ final class SubscriptionStore {
             // RevenueCat throws if already anonymous; ignore.
         }
         status = .unknown
-        currentOffering = nil
+        currentProduct = nil
     }
 
-    func purchase(_ package: Package) async throws {
-        let result = try await Purchases.shared.purchase(package: package)
+    func purchase(_ product: StoreProduct) async throws {
+        let result = try await Purchases.shared.purchase(product: product)
         apply(customerInfo: result.customerInfo)
     }
 
@@ -69,6 +69,22 @@ final class SubscriptionStore {
 
     private func apply(customerInfo: CustomerInfo) {
         status = Status.from(customerInfo: customerInfo)
+    }
+
+    /// True when the user currently has access to subscriber-gated features.
+    /// Includes `.active` and `.inGracePeriod`; treats `.cancelled` as entitled only
+    /// while the paid window has not yet elapsed.
+    var isEntitled: Bool {
+        switch status {
+        case .active:
+            true
+        case .inGracePeriod:
+            true
+        case let .cancelled(expiresAt):
+            expiresAt > Date()
+        case .inactive, .unknown:
+            false
+        }
     }
 }
 

@@ -26,7 +26,7 @@ enum AppEnvironment {
         let value = Bundle.main.infoDictionary?["REVENUECAT_PUBLIC_KEY"] as? String ?? ""
         #if DEBUG
             if value.isEmpty {
-                return "test_WcxHMahbebtdRdqPzupwQZHjRIz"
+                return "appl_kcwccoejaIlFNlWwefZHjJTtfbm"
             }
         #else
             assert(
@@ -51,7 +51,13 @@ enum AppEnvironment {
 
     @MainActor
     static func makeSubscriptionStore() -> SubscriptionStore {
-        SubscriptionStore()
+        let store = SubscriptionStore()
+        Task { [weak store] in
+            await liveAPIClient.setSubscriptionGate {
+                await MainActor.run { store?.isEntitled ?? false }
+            }
+        }
+        return store
     }
 
     @MainActor
@@ -82,5 +88,19 @@ enum AppEnvironment {
         #else
             return LiveQuizService(client: liveAPIClient)
         #endif
+    }
+
+    static var readingStatsService: ReadingStatsService {
+        #if DEBUG
+            if UserDefaults.standard.bool(forKey: "CrawMockStats") {
+                return MockReadingStatsService()
+            }
+        #endif
+        return LiveReadingStatsService(client: liveAPIClient)
+    }
+
+    @MainActor
+    static func makeStatsViewModel() -> StatsViewModel {
+        StatsViewModel(service: readingStatsService)
     }
 }

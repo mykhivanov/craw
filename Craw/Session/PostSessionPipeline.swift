@@ -43,6 +43,7 @@ final class PostSessionPipeline {
         }
 
         try? modelContext.save()
+        DailyStatsSync.sync(for: endedAt, in: modelContext)
         return session
     }
 
@@ -52,6 +53,7 @@ final class PostSessionPipeline {
             focusDifficulty: focusDifficulty
         ))
         try? modelContext.save()
+        DailyStatsSync.sync(for: .now, in: modelContext)
     }
 
     func updateQuizResult(
@@ -70,6 +72,7 @@ final class PostSessionPipeline {
             session.quizMark = mark
         }
         try? modelContext.save()
+        DailyStatsSync.sync(for: session.endedAt, in: modelContext)
     }
 
     /// Idempotent: flips `isFinished = true` and stamps `finishedAt = .now` only on the
@@ -83,6 +86,7 @@ final class PostSessionPipeline {
             book.isFinished = true
             book.finishedAt = .now
             try? modelContext.save()
+            DailyStatsSync.sync(for: .now, in: modelContext)
         }
     }
 

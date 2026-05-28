@@ -1,5 +1,6 @@
 import ClerkKit
 import ClerkKitUI
+import SwiftData
 import SwiftUI
 
 struct AuthGate: View {
@@ -8,6 +9,7 @@ struct AuthGate: View {
     @Environment(DeviceRegistrationCoordinator.self) private var deviceRegistration
     @Environment(SubscriptionStore.self) private var subscriptionStore
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.modelContext) private var modelContext
 
     @State private var sessionStore: AuthSessionStore = AppEnvironment.makeAuthSessionStore()
     @State private var onboardingState: OnboardingState = .init()
@@ -38,6 +40,7 @@ struct AuthGate: View {
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active, clerk.user != nil {
                     sessionStore.retryIfTransient()
+                    DailyStatsSync.syncYesterdayIfDayRolled(in: modelContext)
                 }
             }
             .task {

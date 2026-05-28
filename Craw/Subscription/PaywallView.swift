@@ -8,8 +8,8 @@ struct PaywallView: View {
 
     var body: some View {
         Group {
-            if let offering = subscriptionStore.currentOffering, let package = monthlyPackage(in: offering) {
-                content(package: package)
+            if let product = subscriptionStore.currentProduct {
+                content(product: product)
             } else if viewModel.isLoadingOfferings {
                 ProgressView()
                     .tint(Theme.Palette.rausch)
@@ -20,7 +20,7 @@ struct PaywallView: View {
             }
         }
         .task {
-            if subscriptionStore.currentOffering == nil {
+            if subscriptionStore.currentProduct == nil {
                 viewModel.isLoadingOfferings = true
                 await subscriptionStore.refresh()
                 viewModel.isLoadingOfferings = false
@@ -28,11 +28,7 @@ struct PaywallView: View {
         }
     }
 
-    private func monthlyPackage(in offering: Offering) -> Package? {
-        offering.monthly ?? offering.availablePackages.first
-    }
-
-    private func content(package: Package) -> some View {
+    private func content(product: StoreProduct) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
                 header
@@ -52,7 +48,7 @@ struct PaywallView: View {
         }
         .background(Theme.Palette.canvas)
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            bottomBar(package: package)
+            bottomBar(product: product)
         }
         .overlay(alignment: .topTrailing) {
             Button {
@@ -67,7 +63,7 @@ struct PaywallView: View {
         }
     }
 
-    private func bottomBar(package: Package) -> some View {
+    private func bottomBar(product: StoreProduct) -> some View {
         VStack(spacing: Theme.Spacing.xs) {
             if let error = viewModel.errorMessage {
                 Text(error)
@@ -75,7 +71,7 @@ struct PaywallView: View {
                     .foregroundStyle(Theme.Palette.trendDown)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            cta(package: package)
+            cta(product: product)
             restoreButton
             footer
         }
@@ -248,11 +244,11 @@ struct PaywallView: View {
         }
     }
 
-    private func cta(package: Package) -> some View {
-        let price = package.storeProduct.localizedPriceString
+    private func cta(product: StoreProduct) -> some View {
+        let price = product.localizedPriceString
         let title = viewModel.isPurchasing ? "Subscribing…" : "Subscribe — \(price) / month"
         return OnboardingPrimaryButton(title: title, isEnabled: !viewModel.isPurchasing) {
-            Task { await purchase(package: package) }
+            Task { await purchase(product: product) }
         }
         .accessibilityIdentifier("paywall.subscribe")
     }
@@ -286,12 +282,12 @@ struct PaywallView: View {
         .frame(maxWidth: .infinity)
     }
 
-    private func purchase(package: Package) async {
+    private func purchase(product: StoreProduct) async {
         viewModel.errorMessage = nil
         viewModel.isPurchasing = true
         defer { viewModel.isPurchasing = false }
         do {
-            try await subscriptionStore.purchase(package)
+            try await subscriptionStore.purchase(product)
             if case .active = subscriptionStore.status { dismiss() }
         } catch let error as ErrorCode where error == .purchaseCancelledError {
             // user cancelled — silent

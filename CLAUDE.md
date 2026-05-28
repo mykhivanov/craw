@@ -16,7 +16,7 @@ Three `Info.plist` keys must be present at launch. `CLERK_PUBLISHABLE_KEY` is su
 | ------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | `CLERK_PUBLISHABLE_KEY`   | Clerk dashboard → API Keys → Publishable key. Assertion fires in DEBUG if missing. | none (asserts)                                                            |
 | `CRAW_API_BASE_URL`       | Backend base URL. Override in staging.                                             | `https://api.craw.app/v1`                                                 |
-| `REVENUECAT_PUBLIC_KEY`   | RevenueCat dashboard → Project settings → Apple App Store → Public app-specific key. Drives the paywall + monthly subscription. | DEBUG falls back to the embedded test key (`test_WcxHMahbebtdRdqPzupwQZHjRIz`); RELEASE asserts. |
+| `REVENUECAT_PUBLIC_KEY`   | RevenueCat dashboard → Project settings → Apple App Store → Public app-specific key. Drives the paywall + monthly subscription. | DEBUG falls back to the embedded Apple App Store public key (`appl_kcwccoejaIlFNlWwefZHjJTtfbm`); RELEASE asserts. |
 
 **Local setup:** in Xcode, select the Craw target → Build Settings → search "INFOPLIST_KEY" → add `INFOPLIST_KEY_CLERK_PUBLISHABLE_KEY = pk_test_...`. For CI, plumb the value through xcconfig substitution so the key is never committed to git.
 
@@ -24,7 +24,7 @@ Three `Info.plist` keys must be present at launch. `CLERK_PUBLISHABLE_KEY` is su
 
 **SwiftPM dependency:** Clerk is consumed via `https://github.com/clerk/clerk-ios` — add via Xcode → File → Add Package Dependencies. Add both `ClerkKit` and `ClerkKitUI` products to the Craw target.
 
-**RevenueCat dependency:** RevenueCat is consumed via `https://github.com/RevenueCat/purchases-ios-spm.git` (already added as a package reference in `Craw.xcodeproj`). The `RevenueCat` product must be linked to the Craw target — Xcode → Craw target → General → Frameworks, Libraries, and Embedded Content → `+` → choose `RevenueCat`. A single auto-renewing monthly product `com.mykhivanov.Craw.monthly` is configured in App Store Connect and mapped in the RevenueCat dashboard to entitlement `craw_pro` under offering `default`.
+**RevenueCat dependency:** RevenueCat is consumed via `https://github.com/RevenueCat/purchases-ios-spm.git` (already added as a package reference in `Craw.xcodeproj`). The `RevenueCat` product must be linked to the Craw target — Xcode → Craw target → General → Frameworks, Libraries, and Embedded Content → `+` → choose `RevenueCat`. A single auto-renewing monthly product `CRAW_MONTHLY_15` is configured in App Store Connect and mapped in the RevenueCat dashboard to entitlement `Craw Membership` under offering `default`.
 
 **Mock search (DEBUG):** to exercise the search UI without the backend, launch with `-CrawMockSearch YES`. `MockBookSearchService` returns three fixture results filtered by query substring.
 
