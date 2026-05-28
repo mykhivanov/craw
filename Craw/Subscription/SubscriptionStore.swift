@@ -90,10 +90,14 @@ final class SubscriptionStore {
 
 extension SubscriptionStore.Status {
     static func from(customerInfo: CustomerInfo) -> Self {
-        guard let entitlement = customerInfo.entitlements[SubscriptionEntitlement.identifier] else {
-            return .inactive
-        }
-        if entitlement.isActive {
+        // Anchor on the product we sell, then fall back to any active entitlement. This avoids
+        // depending on the exact entitlement identifier configured in the RevenueCat dashboard —
+        // a mismatch there would otherwise lock out a paying user.
+        let entitlement = customerInfo.entitlements.active.values.first {
+            $0.productIdentifier == SubscriptionEntitlement.monthlyProductIdentifier
+        } ?? customerInfo.entitlements.active.values.first
+
+        if let entitlement {
             if entitlement.billingIssueDetectedAt != nil {
                 return .inGracePeriod
             }
@@ -104,6 +108,12 @@ extension SubscriptionStore.Status {
                 return .cancelled(expiresAt: expiration)
             }
             return .active(expiresAt: entitlement.expirationDate)
+        }
+
+        // Last resort: the subscription product is active even though no entitlement is mapped to
+        // it in the dashboard. Trust the active subscription directly.
+        if customerInfo.activeSubscriptions.contains(SubscriptionEntitlement.monthlyProductIdentifier) {
+            return .active(expiresAt: nil)
         }
         return .inactive
     }
